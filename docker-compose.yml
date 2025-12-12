@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  claude-dev:
+    image: claude-dev-ubuntu:latest
+    container_name: claude-dev-env
+    platform: linux/arm64
+    volumes:
+      # Persistent workspace for repos and work
+      - claude-workspace:/workspace
+      
+      # Persistent Claude configuration and auth
+      - claude-config:/root/.claude
+      
+      # Mount Docker socket for container operations (optional)
+      - /var/run/docker.sock:/var/run/docker.sock
+      
+      # Mount credentials from host
+      - ./credentials/.gitconfig:/root/.gitconfig:ro
+      - ./credentials/gh:/root/.config/gh:ro
+      - ~/.ssh:/root/.ssh:ro
+      
+      # Mount environment files and startup script
+      - ./.env:/workspace/.env:ro
+      - ./startup.sh:/startup.sh:ro
+      
+    environment:
+      # Load from .env file
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - CLAUDE_API_KEY=${CLAUDE_API_KEY:-}
+      
+      # Additional environment
+      - NODE_ENV=development
+      - FORCE_COLOR=true
+      
+    stdin_open: true
+    tty: true
+    
+    # Keep container running
+    command: ["tail", "-f", "/dev/null"]
+    
+    # No restart so we can debug startup issues
+    restart: "unless-stopped"
+
+volumes:
+  claude-workspace:
+    driver: local
+  claude-config:
+    driver: local

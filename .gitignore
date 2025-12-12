@@ -1,0 +1,114 @@
+# =======================================
+# Security & Credentials (NEVER COMMIT!)
+# =======================================
+.env
+.env.local
+*.pem
+*.key
+*.cert
+
+# All credentials should be ignored
+credentials/
+!credentials/.gitignore
+!credentials/README.md
+
+# Claude specific auth
+.claude/
+*.claude-session
+*.claude-auth
+
+# SSH keys
+*.rsa
+*.dsa
+*.ed25519
+id_rsa*
+id_dsa*
+id_ed25519*
+
+# =======================================
+# Docker & Container Runtime
+# =======================================
+# Docker volumes
+.docker/
+docker-volumes/
+
+# Container runtime files
+*.pid
+*.sock
+
+# =======================================
+# Development & Build Artifacts  
+# =======================================
+# Nix build results
+result
+result-*
+
+# Node modules (if any get added)
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+venv/
+env/
+
+# =======================================
+# Workspace & User Data
+# =======================================
+# User repos directory (working files)
+repos/
+workspace/
+
+# =======================================
+# System Files
+# =======================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Linux
+.directory
+.Trash-*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# =======================================
+# IDE & Editor Files
+# =======================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.#*
+
+# =======================================
+# Logs & Debug Files
+# =======================================
+*.log
+logs/
+*.debug
+debug/
+.claude/logs/
+.claude/debug/
+
+# =======================================
+# Temporary Files
+# =======================================
+*.tmp
+*.temp
+*.bak
+*.backup
+*.old
+.cache/
+tmp/
+temp/
