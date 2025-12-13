@@ -2,12 +2,11 @@
 
 A containerized development environment for Claude AI with development tools and credentials, isolated from your host system.
 
-## What this is
+## Why
 
-- Ubuntu container with Node.js, Git, GitHub CLI, and Claude CLI
-- Your GitHub and Claude credentials mounted securely
-- Persistent workspace for repositories and work
-- Complete isolation from your host system
+Essentially for safety. Now you can:
+ 1. Deliberately choose what credentials you give Claude.
+ 2. Let Claude run unsupervised (you were probably already doing this) with at least some protection against hallucinations.
 
 ## Quick Start
 
@@ -22,7 +21,17 @@ A containerized development environment for Claude AI with development tools and
    yarn claude
    ```
 
-## Credentials
+## What
+So... what is it? 
+
+### Claude runs in a Docker container
+
+- Ubuntu container with Node.js, Git, GitHub CLI, and Claude CLI
+- Your GitHub and Claude credentials mounted securely
+- Persistent workspace for repositories and work
+- Complete isolation from your host system
+
+### Credentials
 
 The container uses:
 - `~/.claude.json` - Claude CLI configuration (mounted)
@@ -31,13 +40,23 @@ The container uses:
 - `GIT_USER_NAME` - Git commit author name (from `.env`)
 - `GIT_USER_EMAIL` - Git commit author email (from `.env`)
 
-## Storage
+### Storage
 
 - `/workspace` - Persistent directory mounted from host `./workspace`
 - Survives container restarts and rebuilds
 - Access your work directly from host at `./workspace`
 
-## Configuration
+### IDE and Development Tool Access
+
+Since `./workspace` is mounted as a volume, you can:
+- **Edit files using your favorite IDE** (VS Code, Cursor, IntelliJ, etc.) directly from your host machine
+- **Use GUI tools** like GitKraken, SourceTree, or GitHub Desktop on files in `./workspace`
+- **Run local analysis tools** on the code without entering the container
+- **Keep your workflow** - work in your IDE as normal, run Claude commands in the container
+
+This gives you the best of both worlds: your familiar development environment on the host, with Claude and all tools available in the container.
+
+### Configuration
 
 The container mounts several configuration files to provide a comfortable development environment:
 
@@ -49,8 +68,6 @@ The container mounts several configuration files to provide a comfortable develo
 **Note:** Feel free to customize these config files to make yourself feel at home in the container! They're mounted from the host, so you can edit them to match your preferences.
 
 ## Commands
-
-### Using npm/yarn (recommended)
 
 The project includes convenient npm scripts that auto-start the container:
 
