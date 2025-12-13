@@ -1,0 +1,19 @@
+[init]
+    defaultBranch = master
+[pull]
+    rebase = false
+[core]
+    autocrlf = input
+[push]
+    default = current
+    autoSetupRemote = true
+[alias]
+    a = add
+    aa = add --all
+    ac = !git add --all && git commit -a -m
+    st = status
+    co = checkout
+    br = branch
+    lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+    up = pull --rebase --autostash
+    pu = !git push origin `git branch --show-current`

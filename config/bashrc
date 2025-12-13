@@ -1,0 +1,78 @@
+# Claude Development Environment - Enhanced Bash Configuration
+
+# Jump to directories without cd using just the directory name
+# This enables typing just "repos" to go to /workspace/repos
+shopt -s autocd
+
+# Initialize zoxide (smarter cd that learns your habits)
+if command -v zoxide &> /dev/null; then
+    eval "$(zoxide init bash)"
+fi
+
+# Configure Starship prompt
+if command -v starship &> /dev/null; then
+    eval "$(starship init bash)"
+    
+    # Copy Starship config if it doesn't exist
+    if [ ! -f ~/.config/starship.toml ]; then
+        mkdir -p ~/.config
+        cp /usr/share/starship/starship.toml ~/.config/starship.toml
+    fi
+fi
+
+# Directory bookmarks
+bookmark() {
+    if [ -z "$1" ]; then
+        echo "Usage: bookmark <name>"
+        echo "Current bookmarks:"
+        [ -f ~/.bookmarks ] && cat ~/.bookmarks
+        return 1
+    fi
+    echo "$(pwd)|$1" >> ~/.bookmarks
+    echo "Bookmarked $(pwd) as '$1'"
+}
+
+go() {
+    if [ -z "$1" ]; then
+        echo "Usage: go <bookmark>"
+        echo "Available bookmarks:"
+        [ -f ~/.bookmarks ] && cut -d'|' -f2 ~/.bookmarks
+        return 1
+    fi
+    local path=$(grep "|$1$" ~/.bookmarks | cut -d'|' -f1 | head -1)
+    if [ -n "$path" ]; then
+        cd "$path"
+    else
+        echo "Bookmark '$1' not found"
+    fi
+}
+
+# Fuzzy directory finder using fzf
+f() {
+    local dir
+    dir=$(find /workspace -type d -name .git -prune -o -type d -print 2>/dev/null | fzf +m) && cd "$dir"
+}
+
+# Quick repo switcher
+repo() {
+    if [ -z "$1" ]; then
+        local dir
+        dir=$(find /workspace/repos -maxdepth 1 -type d ! -path /workspace/repos | fzf +m) && cd "$dir"
+    else
+        cd "/workspace/repos/$1" 2>/dev/null || echo "Repository '$1' not found"
+    fi
+}
+
+# Claude function - should already be installed globally
+claude() {
+    if ! command -v claude &> /dev/null; then
+        echo "Installing Claude CLI..."
+        npm install -g @anthropic-ai/claude-code
+    fi
+    command claude "$@" --dangerously-skip-permissions
+}
+
+
+# Welcome message
+echo "🔧 Claude environment ready"
+echo "🤖 Run 'claude' to start a conversation with Claude"

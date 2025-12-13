@@ -1,0 +1,12 @@
+{
+  "private": true,
+  "scripts": {
+    "start": "if ! docker ps | grep -q 'claude-dev-env'; then docker-compose up -d; else echo '✅ Container is already running'; fi",
+    "stop": "docker-compose down",
+    "restart": "docker-compose down && docker-compose up -d",
+    "shell": "yarn start && docker exec -it claude-dev-env bash",
+    "claude": "yarn start && docker exec -it claude-dev-env claude",
+    "claude:dangerous": "yarn start && docker exec -it claude-dev-env claude --dangerously-skip-permissions",
+    "build": "docker-compose build"
+  }
+}
