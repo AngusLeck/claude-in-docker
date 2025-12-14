@@ -17,7 +17,7 @@ services:
       
       # Mount configuration files, feel free to change this, it's just here to make you feel at home.
       - ./config/bashrc:/etc/bash.bashrc:ro
-      - ./config/starship.toml:/usr/share/starship/starship.toml:ro
+      - ./config/starship.toml:/root/.config/starship.toml:ro
       - ./config/.gitconfig:/etc/gitconfig:ro
       - ./config/gh-config.yml:/etc/gh/config.yml:ro
       
