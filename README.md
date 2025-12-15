@@ -110,6 +110,15 @@ claude-docker
 
 # Global mode - run Claude in persistent workspace
 claude-docker -g
+
+# Update to latest version
+claude-docker --update
+
+# Uninstall
+claude-docker --uninstall
+
+# Show help
+claude-docker --help
 ```
 
 ### From Repo Directory (yarn scripts)
@@ -156,13 +165,21 @@ Feel free to customize these to make yourself at home in the container.
 
 ## Uninstall
 
-```bash
-# Remove installed scripts
-rm ~/.local/bin/claude-docker
-rm ~/.local/bin/claude-docker-global
-rm ~/.local/bin/claude-docker-project
+The easiest way to uninstall:
 
-# Remove credentials
+```bash
+claude-docker --uninstall
+```
+
+This will interactively prompt you about what to remove (containers, image, credentials).
+
+Or manually:
+
+```bash
+# Remove symlink
+rm ~/.local/bin/claude-docker
+
+# Remove installation directory
 rm -rf ~/.claude-in-docker
 
 # Remove Docker image

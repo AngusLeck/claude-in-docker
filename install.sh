@@ -56,6 +56,8 @@ cp "$REPO_DIR/docker-compose.project.yml" "$INSTALL_DIR/"
 cp "$REPO_DIR/claude-docker" "$INSTALL_DIR/"
 cp "$REPO_DIR/claude-docker-global" "$INSTALL_DIR/"
 cp "$REPO_DIR/claude-docker-project" "$INSTALL_DIR/"
+cp "$REPO_DIR/claude-docker-uninstall" "$INSTALL_DIR/"
+cp "$REPO_DIR/claude-docker-update" "$INSTALL_DIR/"
 cp -r "$REPO_DIR/config" "$INSTALL_DIR/"
 cp -r "$REPO_DIR/setup-container" "$INSTALL_DIR/"
 
@@ -66,6 +68,8 @@ mkdir -p "$INSTALL_DIR/workspace"
 chmod +x "$INSTALL_DIR/claude-docker"
 chmod +x "$INSTALL_DIR/claude-docker-global"
 chmod +x "$INSTALL_DIR/claude-docker-project"
+chmod +x "$INSTALL_DIR/claude-docker-uninstall"
+chmod +x "$INSTALL_DIR/claude-docker-update"
 
 echo "Files installed to $INSTALL_DIR"
 echo

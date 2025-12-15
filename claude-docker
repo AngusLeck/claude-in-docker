@@ -1,6 +1,6 @@
 #!/bin/bash
 # claude-docker - Run Claude in a Docker container
-# Routes to either global mode (-g) or project mode (default)
+# Routes to the appropriate script based on flags
 
 set -e
 
@@ -13,10 +13,34 @@ get_script_dir() {
 
 SCRIPT_DIR="$(get_script_dir)"
 
-# Check for global mode flag
-if [[ "$1" == "-g" ]] || [[ "$1" == "--global" ]]; then
-    shift
-    exec "$SCRIPT_DIR/claude-docker-global" "$@"
-else
-    exec "$SCRIPT_DIR/claude-docker-project" "$@"
-fi
+case "$1" in
+    --uninstall)
+        exec "$SCRIPT_DIR/claude-docker-uninstall"
+        ;;
+    --update)
+        exec "$SCRIPT_DIR/claude-docker-update"
+        ;;
+    -g|--global)
+        shift
+        exec "$SCRIPT_DIR/claude-docker-global" "$@"
+        ;;
+    --help|-h)
+        echo "Usage: claude-docker [OPTIONS] [CLAUDE_ARGS...]"
+        echo
+        echo "Run Claude in a Docker container."
+        echo
+        echo "Modes:"
+        echo "  (default)      Project mode - mount current directory"
+        echo "  -g, --global   Global mode - persistent workspace"
+        echo
+        echo "Management:"
+        echo "  --update       Update to latest version"
+        echo "  --uninstall    Remove claude-docker"
+        echo
+        echo "  --help, -h     Show this help"
+        exit 0
+        ;;
+    *)
+        exec "$SCRIPT_DIR/claude-docker-project" "$@"
+        ;;
+esac
