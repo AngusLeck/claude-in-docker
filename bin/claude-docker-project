@@ -13,7 +13,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
 source "$ROOT_DIR/lib/flags.sh"
-source "$ROOT_DIR/lib/gum.sh"
 
 PROJECT_DIR="$(pwd)"
 
@@ -42,7 +41,7 @@ check_safe_directory() {
 
     # Warn on shallow directories (less than 3 levels deep)
     if [[ $depth -lt 3 ]]; then
-        if ! gum_confirm "Warning: '$dir' is a high-level directory. Mount anyway?"; then
+        if ! gum confirm "Warning: '$dir' is a high-level directory. Mount anyway?"; then
             echo "Cancelled."
             exit 1
         fi
