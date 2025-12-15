@@ -124,8 +124,8 @@ install_files() {
     cp -r "$REPO_DIR/lib" "$INSTALL_DIR/"
     cp -r "$REPO_DIR/config" "$INSTALL_DIR/"
     cp -r "$REPO_DIR/completions" "$INSTALL_DIR/"
+    cp -r "$REPO_DIR/workspace" "$INSTALL_DIR/"
 
-    mkdir -p "$INSTALL_DIR/workspace"
     chmod +x "$INSTALL_DIR/bin/"*
 
     # Write credentials now (after install dir exists)
