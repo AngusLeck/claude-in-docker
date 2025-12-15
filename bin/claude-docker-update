@@ -4,7 +4,7 @@ set -e
 
 INSTALL_DIR="$HOME/.claude-in-docker"
 REPO_URL="https://github.com/AngusLeck/claude-in-docker.git"
-BRANCH="${1:-main}"  # Allow specifying branch, default to main
+BRANCH="${1:-master}"  # Allow specifying branch, default to main
 TEMP_DIR="/tmp/claude-docker-update-$$"
 
 echo "================================"
