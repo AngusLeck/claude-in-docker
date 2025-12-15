@@ -153,7 +153,6 @@ Feel free to customize these to make yourself at home in the container.
 - Docker and Docker Compose
 - GitHub token (for repo access)
 - Claude credentials (from `~/.claude.json` or keychain)
-- Optional: [gum](https://github.com/charmbracelet/gum) for a nicer install experience
 
 ## Uninstall
 

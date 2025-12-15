@@ -5,114 +5,34 @@ set -e
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INSTALL_DIR="$HOME/.claude-in-docker"
 DEFAULT_BIN_DIR="$HOME/.local/bin"
+IMAGE_NAME="claude-dev-ubuntu:latest"
 
 echo "================================"
 echo "  Claude-in-Docker Installer"
 echo "================================"
 echo
 
-# Check for gum and offer to install if missing
-check_gum() {
-    if command -v gum &>/dev/null; then
-        return 0
-    fi
-
-    echo "gum is not installed. It provides a nicer installation experience."
-    echo
-    echo "Install options:"
-    echo "  macOS:  brew install gum"
-    echo "  Linux:  See https://github.com/charmbracelet/gum#installation"
-    echo
-    read -p "Continue without gum? [Y/n] " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Nn]$ ]]; then
-        echo "Please install gum and run this script again."
-        exit 1
-    fi
-    return 1
-}
-
-HAS_GUM=false
-if check_gum; then
-    HAS_GUM=true
-fi
-
-# Helper functions for prompts
-prompt_choice() {
-    local prompt="$1"
-    shift
-    local options=("$@")
-
-    if $HAS_GUM; then
-        gum choose "${options[@]}"
-    else
-        echo "$prompt"
-        local i=1
-        for opt in "${options[@]}"; do
-            echo "  $i) $opt"
-            ((i++))
-        done
-        read -p "Choice [1-${#options[@]}]: " choice
-        echo "${options[$((choice-1))]}"
-    fi
-}
-
-prompt_input() {
-    local prompt="$1"
-    local default="$2"
-
-    if $HAS_GUM; then
-        gum input --placeholder "$prompt" --value "$default"
-    else
-        read -p "$prompt [$default]: " value
-        echo "${value:-$default}"
-    fi
-}
-
-prompt_secret() {
-    local prompt="$1"
-
-    if $HAS_GUM; then
-        gum input --password --placeholder "$prompt"
-    else
-        read -sp "$prompt: " value
-        echo
-        echo "$value"
-    fi
-}
-
-prompt_confirm() {
-    local prompt="$1"
-
-    if $HAS_GUM; then
-        gum confirm "$prompt"
-    else
-        read -p "$prompt [y/N] " -n 1 -r
-        echo
-        [[ $REPLY =~ ^[Yy]$ ]]
-    fi
-}
-
-spin() {
-    local title="$1"
-    shift
-
-    if $HAS_GUM; then
-        gum spin --spinner dot --title "$title" -- "$@"
-    else
-        echo "$title"
-        "$@"
-    fi
-}
-
-# Step 1: Build Docker image
+# Step 1: Build Docker image (needed for gum prompts)
 echo "Step 1: Building Docker image"
 echo "-----------------------------"
 
 cd "$REPO_DIR"
-spin "Building claude-dev-ubuntu image..." docker-compose build
+docker-compose build
 echo "Done building image."
 echo
+
+# Helper functions that run gum inside the container
+gum_choose() {
+    docker run --rm -it "$IMAGE_NAME" gum choose "$@"
+}
+
+gum_input() {
+    docker run --rm -it "$IMAGE_NAME" gum input "$@"
+}
+
+gum_confirm() {
+    docker run --rm -it "$IMAGE_NAME" gum confirm "$@"
+}
 
 # Step 2: Copy files to install directory
 echo "Step 2: Installing files"
@@ -146,17 +66,19 @@ echo "-----------------------------"
 
 # Check if .env already exists
 if [[ -f "$INSTALL_DIR/.env" ]]; then
-    if ! prompt_confirm "Credentials already exist. Overwrite?"; then
+    if ! gum_confirm "Credentials already exist. Overwrite?"; then
         echo "Keeping existing credentials."
+        SKIP_CREDENTIALS=true
     else
         rm "$INSTALL_DIR/.env"
+        SKIP_CREDENTIALS=false
     fi
+else
+    SKIP_CREDENTIALS=false
 fi
 
-if [[ ! -f "$INSTALL_DIR/.env" ]]; then
-    method=$(prompt_choice "How would you like to configure credentials?" \
-        "Enter credentials interactively" \
-        "Edit config file in editor")
+if [[ "$SKIP_CREDENTIALS" == "false" ]]; then
+    method=$(gum_choose "Enter credentials interactively" "Edit config file in editor")
 
     if [[ "$method" == "Enter credentials interactively" ]]; then
         # Try to auto-detect existing values
@@ -169,25 +91,25 @@ if [[ ! -f "$INSTALL_DIR/.env" ]]; then
 
         echo
         echo "Git Configuration:"
-        GIT_USER_NAME=$(prompt_input "Git user name" "$DEFAULT_GIT_NAME")
-        GIT_USER_EMAIL=$(prompt_input "Git user email" "$DEFAULT_GIT_EMAIL")
+        GIT_USER_NAME=$(gum_input --placeholder "Git user name" --value "$DEFAULT_GIT_NAME")
+        GIT_USER_EMAIL=$(gum_input --placeholder "Git user email" --value "$DEFAULT_GIT_EMAIL")
 
         echo
         echo "GitHub Token:"
         if [[ -n "$DEFAULT_GH_TOKEN" ]]; then
-            if prompt_confirm "Found GitHub token from gh CLI. Use it?"; then
+            if gum_confirm "Found GitHub token from gh CLI. Use it?"; then
                 GITHUB_TOKEN="$DEFAULT_GH_TOKEN"
             else
-                GITHUB_TOKEN=$(prompt_secret "GitHub personal access token")
+                GITHUB_TOKEN=$(gum_input --password --placeholder "GitHub personal access token")
             fi
         else
-            GITHUB_TOKEN=$(prompt_secret "GitHub personal access token")
+            GITHUB_TOKEN=$(gum_input --password --placeholder "GitHub personal access token")
         fi
 
         echo
         echo "Claude Credentials:"
         echo "(Paste the JSON from ~/.claude/.credentials.json or leave empty to use ~/.claude.json)"
-        CLAUDE_CREDENTIALS=$(prompt_secret "Claude credentials JSON (optional)")
+        CLAUDE_CREDENTIALS=$(gum_input --password --placeholder "Claude credentials JSON (optional)")
 
         # Write .env file
         cat > "$INSTALL_DIR/.env" << EOF
@@ -206,10 +128,7 @@ EOF
         # Copy template and open in editor
         cp "$REPO_DIR/.env.example" "$INSTALL_DIR/.env"
 
-        EDITOR_CHOICE=$(prompt_choice "Which editor?" \
-            "${EDITOR:-vim}" \
-            "vim" \
-            "nano")
+        EDITOR_CHOICE=$(gum_choose "${EDITOR:-vim}" "vim" "nano")
 
         echo "Opening $INSTALL_DIR/.env in $EDITOR_CHOICE..."
         echo "Save and close when done."
@@ -229,7 +148,7 @@ if [[ -d "$DEFAULT_BIN_DIR" ]] && [[ ":$PATH:" == *":$DEFAULT_BIN_DIR:"* ]]; the
     BIN_DIR="$DEFAULT_BIN_DIR"
 else
     echo "Default location $DEFAULT_BIN_DIR is not in PATH."
-    BIN_DIR=$(prompt_input "Symlink location" "$DEFAULT_BIN_DIR")
+    BIN_DIR=$(gum_input --placeholder "Symlink location" --value "$DEFAULT_BIN_DIR")
     mkdir -p "$BIN_DIR"
 fi
 
