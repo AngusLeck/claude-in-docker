@@ -4,6 +4,7 @@ set -e
 
 INSTALL_DIR="$HOME/.claude-in-docker"
 REPO_URL="https://github.com/AngusLeck/claude-in-docker.git"
+BRANCH="${1:-master}"  # Allow specifying branch, default to main
 TEMP_DIR="/tmp/claude-docker-update-$$"
 
 echo "================================"
@@ -24,8 +25,11 @@ if ! command -v git &>/dev/null; then
 fi
 
 # Clone latest version
-echo "Fetching latest version..."
-git clone --depth 1 "$REPO_URL" "$TEMP_DIR" 2>&1 | grep -v "^Cloning"
+echo "Fetching latest version (branch: $BRANCH)..."
+if ! git clone --depth 1 --branch "$BRANCH" "$REPO_URL" "$TEMP_DIR"; then
+    echo "Error: Failed to clone repository"
+    exit 1
+fi
 echo
 
 # Backup credentials
