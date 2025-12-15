@@ -36,10 +36,3 @@ services:
 
     stdin_open: true
     tty: true
-
-    command: |
-      bash -c "
-        /setup-container/setup-credentials.sh
-        echo 'Container ready.'
-        /setup-container/keep-alive.sh
-      "

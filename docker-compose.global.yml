@@ -13,4 +13,7 @@ services:
     volumes:
       - ./workspace:/workspace
 
+    # Keep container running for docker exec access
+    command: ["/setup-container/keep-alive.sh"]
+
     restart: unless-stopped

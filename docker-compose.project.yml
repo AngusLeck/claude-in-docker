@@ -1,16 +1,12 @@
 version: '3.8'
 
 # Project mode: Per-directory container that mounts the current project
-# Use with: docker-compose -f docker-compose.base.yml -f docker-compose.project.yml up
-# Requires environment variables: PROJECT_DIR, CONTAINER_NAME
+# Use with: docker-compose -f docker-compose.base.yml -f docker-compose.project.yml run --rm claude
+# Requires environment variable: PROJECT_DIR
 
 services:
   claude:
-    container_name: ${CONTAINER_NAME}
-
     volumes:
       - ${PROJECT_DIR}:/workspace/project
 
     working_dir: /workspace/project
-
-    restart: "no"

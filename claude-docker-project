@@ -1,6 +1,7 @@
 #!/bin/bash
 # claude-docker-project - Run Claude in project mode
 # Per-directory container that mounts current working directory
+# Container stops and is removed when you exit
 
 set -e
 
@@ -12,7 +13,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 source "$SCRIPT_DIR/lib/flags.sh"
 source "$SCRIPT_DIR/lib/gum.sh"
-source "$SCRIPT_DIR/lib/container.sh"
 
 PROJECT_DIR="$(pwd)"
 
@@ -50,10 +50,6 @@ check_safe_directory() {
 
 check_safe_directory "$PROJECT_DIR"
 
-# Generate deterministic container name from path
-CONTAINER_HASH=$(echo "$PROJECT_DIR" | sha256sum | cut -c1-12)
-CONTAINER_NAME="claude-docker-${CONTAINER_HASH}"
-
 # Determine which env file to use
 if [[ -f "$HOME/.claude-in-docker/.env" ]]; then
     ENV_FILE="$HOME/.claude-in-docker/.env"
@@ -65,24 +61,20 @@ else
     exit 1
 fi
 
-if container_exists; then
-    # Container exists - start if needed and exec
-    if ! container_running; then
-        echo "Starting existing container for $(basename "$PROJECT_DIR")..."
-        ensure_container_running
-    fi
-    run_in_container "$@"
+export PROJECT_DIR
+export ENV_FILE
+
+# Determine command to run based on flags
+if $SHELL_MODE; then
+    CMD="bash"
+elif $DANGEROUS_MODE; then
+    CMD="claude --dangerously-skip-permissions"
 else
-    # Create new container using docker-compose
-    echo "Creating new container for $(basename "$PROJECT_DIR")..."
-
-    export PROJECT_DIR
-    export CONTAINER_NAME
-    export ENV_FILE
-
-    cd "$SCRIPT_DIR"
-    docker-compose -f docker-compose.base.yml -f docker-compose.project.yml -p "$CONTAINER_NAME" --env-file "$ENV_FILE" up -d
-    sleep 2
-
-    run_in_container "$@"
+    CMD="claude"
 fi
+
+# Run container - it will be removed when you exit
+cd "$SCRIPT_DIR"
+exec docker-compose -f docker-compose.base.yml -f docker-compose.project.yml \
+    --env-file "$ENV_FILE" \
+    run --rm claude $CMD "$@"

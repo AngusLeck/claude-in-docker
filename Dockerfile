@@ -60,5 +60,11 @@ RUN mkdir -p /workspace/repos /root/.claude
 # Set working directory
 WORKDIR /workspace
 
+# Copy and set entrypoint
+COPY setup-container/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["bash"]
+
 # Expose common development ports
 EXPOSE 3000 8000 8080
