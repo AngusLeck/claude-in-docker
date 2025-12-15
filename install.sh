@@ -22,18 +22,43 @@ docker-compose -f compose.base.yml -f compose.global.yml build
 echo "Done building image."
 echo
 
-# Start a helper container for gum prompts (much faster than docker run each time)
-# Use --entrypoint to bypass the default entrypoint which requires env vars
-docker run -d --name "$GUM_CONTAINER" --entrypoint "" "$GUM_IMAGE" tail -f /dev/null >/dev/null
-
-# Ensure cleanup on exit (success or failure)
-cleanup() {
-    docker rm -f "$GUM_CONTAINER" >/dev/null 2>&1 || true
+# Simple prompt functions for install (no Docker/gum dependency)
+gum_confirm() {
+    local prompt="$1"
+    read -p "$prompt [y/N] " -n 1 -r
+    echo
+    [[ $REPLY =~ ^[Yy]$ ]]
 }
-trap cleanup EXIT
 
-# Now source gum.sh - it will use the running GUM_CONTAINER
-source "$REPO_DIR/lib/gum.sh"
+gum_choose() {
+    local options=("$@")
+    local i=1
+    for opt in "${options[@]}"; do
+        echo "  $i) $opt" >&2
+        ((i++))
+    done
+    read -p "Choice [1-${#options[@]}]: " choice
+    echo "${options[$((choice-1))]}"
+}
+
+gum_input() {
+    local placeholder="" value="" password=false
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --placeholder) placeholder="$2"; shift 2 ;;
+            --value) value="$2"; shift 2 ;;
+            --password) password=true; shift ;;
+            *) shift ;;
+        esac
+    done
+    if $password; then
+        read -sp "$placeholder: " input
+        echo >&2
+    else
+        read -p "$placeholder [$value]: " input
+    fi
+    echo "${input:-$value}"
+}
 
 # Step 2: Copy files to install directory
 echo "Step 2: Installing files"
