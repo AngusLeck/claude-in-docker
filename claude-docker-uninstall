@@ -49,10 +49,10 @@ if [[ -f "$ZSH_COMPLETION_FILE" ]]; then
     echo "  Removed $ZSH_COMPLETION_FILE"
 fi
 
-# Remove project containers
+# Remove project containers (claude-docker-<hash>, but not claude-docker-global)
 echo
 echo "Checking for project containers..."
-project_containers=$(docker ps -a --filter "name=claude-project-" --format '{{.Names}}' 2>/dev/null || true)
+project_containers=$(docker ps -a --filter "name=claude-docker-" --format '{{.Names}}' 2>/dev/null | grep -v "^claude-docker-global$" || true)
 if [[ -n "$project_containers" ]]; then
     echo "Found project containers:"
     echo "$project_containers" | sed 's/^/  /'
@@ -66,11 +66,11 @@ if [[ -n "$project_containers" ]]; then
 fi
 
 # Remove global container
-global_container=$(docker ps -a --filter "name=claude-dev-env" --format '{{.Names}}' 2>/dev/null || true)
+global_container=$(docker ps -a --filter "name=claude-docker-global" --format '{{.Names}}' 2>/dev/null || true)
 if [[ -n "$global_container" ]]; then
     echo
-    if gum_confirm "Remove global container (claude-dev-env)?"; then
-        docker rm -f claude-dev-env >/dev/null
+    if gum_confirm "Remove global container (claude-docker-global)?"; then
+        docker rm -f claude-docker-global >/dev/null
         echo "  Removed."
     else
         echo "  Kept."

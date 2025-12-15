@@ -202,5 +202,5 @@ rm -rf ~/.claude-in-docker
 docker rmi claude-dev-ubuntu:latest
 
 # Remove project containers
-docker rm $(docker ps -a --filter "name=claude-project-" -q)
+docker rm $(docker ps -a --filter "name=claude-docker-" -q | grep -v claude-docker-global)
 ```

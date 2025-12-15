@@ -52,7 +52,7 @@ check_safe_directory "$PROJECT_DIR"
 
 # Generate deterministic container name from path
 CONTAINER_HASH=$(echo "$PROJECT_DIR" | sha256sum | cut -c1-12)
-CONTAINER_NAME="claude-project-${CONTAINER_HASH}"
+CONTAINER_NAME="claude-docker-${CONTAINER_HASH}"
 
 # Determine which env file to use
 if [[ -f "$HOME/.claude-in-docker/.env" ]]; then

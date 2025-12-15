@@ -8,7 +8,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: claude-dev-env
+    container_name: claude-docker-global
 
     volumes:
       - ./workspace:/workspace

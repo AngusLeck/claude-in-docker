@@ -13,7 +13,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/flags.sh"
 source "$SCRIPT_DIR/lib/container.sh"
 
-CONTAINER_NAME="claude-dev-env"
+CONTAINER_NAME="claude-docker-global"
 
 parse_mode_flags "$@"
 set -- "${REMAINING_ARGS[@]}"
