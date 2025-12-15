@@ -4,7 +4,12 @@
 
 set -e
 
-source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/script-dir.sh"
+# Get directory where this script lives, resolving symlinks.
+# - BASH_SOURCE[0]: path used to invoke this script (may be a symlink)
+# - dirname: extracts the directory portion
+# - cd && pwd: resolves to absolute path, following symlinks
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 source "$SCRIPT_DIR/lib/flags.sh"
 source "$SCRIPT_DIR/lib/gum.sh"
 source "$SCRIPT_DIR/lib/container.sh"
