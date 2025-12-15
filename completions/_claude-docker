@@ -1,0 +1,17 @@
+#compdef claude-docker
+# Zsh completion for claude-docker
+# Place in a directory in your $fpath (e.g., ~/.zfunc/)
+
+_claude-docker() {
+    _arguments -s \
+        '(-g --global)'{-g,--global}'[Run in global workspace mode]' \
+        '(-s --shell)'{-s,--shell}'[Open bash shell instead of claude]' \
+        '(-d --dangerous)'{-d,--dangerous}'[Run claude with --dangerously-skip-permissions]' \
+        '(-w --workspace)'{-w,--workspace}'[Print global workspace path]' \
+        '--update[Update to latest version]' \
+        '--uninstall[Remove claude-docker]' \
+        '(-h --help)'{-h,--help}'[Show help message]' \
+        '*:claude args:_default'
+}
+
+_claude-docker "$@"

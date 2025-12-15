@@ -182,6 +182,45 @@ if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
     echo
 fi
 
+# Step 5: Install shell completions
+echo "Step 5: Shell completions"
+echo "-------------------------"
+
+COMPLETIONS_INSTALLED=false
+
+# Bash completions
+BASH_COMPLETION_DIR="${BASH_COMPLETION_USER_DIR:-$HOME/.local/share/bash-completion/completions}"
+if [[ -n "$BASH_VERSION" ]] || [[ -f "$HOME/.bashrc" ]]; then
+    mkdir -p "$BASH_COMPLETION_DIR"
+    cp "$REPO_DIR/completions/claude-docker.bash" "$BASH_COMPLETION_DIR/claude-docker"
+    echo "Bash completions installed to $BASH_COMPLETION_DIR/claude-docker"
+    COMPLETIONS_INSTALLED=true
+fi
+
+# Zsh completions
+if [[ -n "$ZSH_VERSION" ]] || [[ -f "$HOME/.zshrc" ]]; then
+    ZSH_COMPLETION_DIR="$HOME/.zfunc"
+    mkdir -p "$ZSH_COMPLETION_DIR"
+    cp "$REPO_DIR/completions/_claude-docker" "$ZSH_COMPLETION_DIR/_claude-docker"
+    echo "Zsh completions installed to $ZSH_COMPLETION_DIR/_claude-docker"
+
+    # Check if fpath includes this directory
+    if ! grep -q 'fpath.*\.zfunc' "$HOME/.zshrc" 2>/dev/null; then
+        echo
+        echo "To enable Zsh completions, add to ~/.zshrc:"
+        echo '  fpath=(~/.zfunc $fpath)'
+        echo '  autoload -Uz compinit && compinit'
+    fi
+    COMPLETIONS_INSTALLED=true
+fi
+
+if $COMPLETIONS_INSTALLED; then
+    echo
+    echo "Restart your shell or source your config to enable completions."
+fi
+
+echo
+
 # Done
 echo "================================"
 echo "  Installation complete!"
@@ -190,6 +229,7 @@ echo
 echo "Usage:"
 echo "  claude-docker         Run Claude in current directory (project mode)"
 echo "  claude-docker -g      Run Claude in global workspace mode"
+echo "  claude-docker --help  Show all options"
 echo
 echo "Installation directory: $INSTALL_DIR"
 echo "Symlink: $BIN_DIR/claude-docker"

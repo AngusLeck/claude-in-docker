@@ -61,6 +61,21 @@ for bin_dir in "$HOME/.local/bin" "/usr/local/bin" "$HOME/bin"; do
     fi
 done
 
+# Remove shell completions
+echo
+echo "Removing shell completions..."
+BASH_COMPLETION_FILE="${BASH_COMPLETION_USER_DIR:-$HOME/.local/share/bash-completion/completions}/claude-docker"
+if [[ -f "$BASH_COMPLETION_FILE" ]]; then
+    rm -f "$BASH_COMPLETION_FILE"
+    echo "  Removed $BASH_COMPLETION_FILE"
+fi
+
+ZSH_COMPLETION_FILE="$HOME/.zfunc/_claude-docker"
+if [[ -f "$ZSH_COMPLETION_FILE" ]]; then
+    rm -f "$ZSH_COMPLETION_FILE"
+    echo "  Removed $ZSH_COMPLETION_FILE"
+fi
+
 # Remove project containers
 echo
 echo "Checking for project containers..."
