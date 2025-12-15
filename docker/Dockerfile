@@ -35,9 +35,20 @@ RUN pip install uv
 # Install Starship prompt
 RUN curl -sS https://starship.rs/install.sh | sh -s -- --yes
 
-# Install Node.js 22 (for Claude CLI and general development)
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-    && apt-get install -y nodejs
+# Install nvm and Node.js versions
+ENV NVM_DIR=/root/.nvm
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash \
+    && . "$NVM_DIR/nvm.sh" \
+    && nvm install 20 \
+    && nvm install 22 \
+    && nvm install 24 \
+    && nvm alias default 24 \
+    && nvm use default \
+    # Create a symlink so PATH can reference a stable location
+    && ln -s "$(dirname $(nvm which default))" "$NVM_DIR/default"
+
+# Make node/npm available in PATH for subsequent RUN commands and container runtime
+ENV PATH=$NVM_DIR/default:$PATH
 
 # Install GitHub CLI (using direct download for ARM64)
 RUN curl -fsSL https://github.com/cli/cli/releases/download/v2.40.0/gh_2.40.0_linux_arm64.tar.gz | tar -xzC /tmp \
