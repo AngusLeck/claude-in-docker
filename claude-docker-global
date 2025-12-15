@@ -23,7 +23,7 @@ cd "$SCRIPT_DIR"
 # Ensure container is running
 if ! container_running; then
     echo "Starting global Claude container..."
-    docker-compose up -d
+    docker-compose -f docker-compose.base.yml -f docker-compose.global.yml up -d
     sleep 2
 fi
 

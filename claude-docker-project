@@ -81,7 +81,7 @@ else
     export ENV_FILE
 
     cd "$SCRIPT_DIR"
-    docker-compose -f docker-compose.project.yml -p "$CONTAINER_NAME" --env-file "$ENV_FILE" up -d
+    docker-compose -f docker-compose.base.yml -f docker-compose.project.yml -p "$CONTAINER_NAME" --env-file "$ENV_FILE" up -d
     sleep 2
 
     run_in_container "$@"

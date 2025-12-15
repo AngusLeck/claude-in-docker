@@ -18,7 +18,7 @@ echo "Step 1: Building Docker image"
 echo "-----------------------------"
 
 cd "$REPO_DIR"
-docker-compose build
+docker-compose -f docker-compose.base.yml -f docker-compose.global.yml build
 echo "Done building image."
 echo
 
@@ -41,7 +41,8 @@ echo "------------------------"
 mkdir -p "$INSTALL_DIR"
 
 # Copy all necessary files
-cp "$REPO_DIR/docker-compose.yml" "$INSTALL_DIR/"
+cp "$REPO_DIR/docker-compose.base.yml" "$INSTALL_DIR/"
+cp "$REPO_DIR/docker-compose.global.yml" "$INSTALL_DIR/"
 cp "$REPO_DIR/docker-compose.project.yml" "$INSTALL_DIR/"
 cp "$REPO_DIR/claude-docker" "$INSTALL_DIR/"
 cp "$REPO_DIR/claude-docker-global" "$INSTALL_DIR/"

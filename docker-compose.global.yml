@@ -1,0 +1,16 @@
+version: '3.8'
+
+# Global mode: Long-running container with persistent workspace
+# Use with: docker-compose -f docker-compose.base.yml -f docker-compose.global.yml up
+
+services:
+  claude:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: claude-dev-env
+
+    volumes:
+      - ./workspace:/workspace
+
+    restart: unless-stopped
