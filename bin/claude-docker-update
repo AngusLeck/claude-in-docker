@@ -1,0 +1,43 @@
+#!/bin/bash
+# claude-docker-update - Update claude-docker to latest version
+set -e
+
+INSTALL_DIR="$HOME/.claude-in-docker"
+REPO_URL="https://github.com/AngusLeck/claude-in-docker.git"
+TEMP_DIR="/tmp/claude-docker-update-$$"
+
+echo "================================"
+echo "  Claude-in-Docker Update"
+echo "================================"
+echo
+
+# Cleanup on exit
+cleanup() {
+    rm -rf "$TEMP_DIR" 2>/dev/null || true
+}
+trap cleanup EXIT
+
+# Check for git
+if ! command -v git &>/dev/null; then
+    echo "Error: git is required for updates"
+    exit 1
+fi
+
+# Clone latest version
+echo "Fetching latest version..."
+git clone --depth 1 "$REPO_URL" "$TEMP_DIR" 2>&1 | grep -v "^Cloning"
+echo
+
+# Backup credentials
+if [[ -f "$INSTALL_DIR/.env" ]]; then
+    echo "Preserving credentials..."
+    cp "$INSTALL_DIR/.env" "$TEMP_DIR/.env"
+fi
+
+# Run install script
+echo "Running installer..."
+echo
+cd "$TEMP_DIR"
+./install.sh
+
+# Cleanup happens via trap

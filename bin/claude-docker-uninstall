@@ -1,0 +1,123 @@
+#!/bin/bash
+# claude-docker-uninstall - Remove claude-docker installation
+set -e
+
+# Get directory where this script lives, resolving symlinks.
+# - BASH_SOURCE[0]: path used to invoke this script (may be a symlink)
+# - dirname: extracts the directory portion
+# - cd && pwd: resolves to absolute path, following symlinks
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(dirname "$SCRIPT_DIR")"
+
+INSTALL_DIR="$HOME/.claude-in-docker"
+DOCKER_IMAGE="claude-dev-ubuntu:latest"
+
+echo "================================"
+echo "  Claude-in-Docker Uninstall"
+echo "================================"
+echo
+
+if ! gum confirm "Uninstall claude-docker?"; then
+    echo "Cancelled."
+    exit 0
+fi
+
+echo
+
+# Find and remove symlink
+echo "Removing symlink..."
+for bin_dir in "$HOME/.local/bin" "/usr/local/bin" "$HOME/bin"; do
+    if [[ -L "$bin_dir/claude-docker" ]]; then
+        rm -f "$bin_dir/claude-docker"
+        echo "  Removed $bin_dir/claude-docker"
+    fi
+done
+
+# Remove shell completions
+echo
+echo "Removing shell completions..."
+BASH_COMPLETION_FILE="${BASH_COMPLETION_USER_DIR:-$HOME/.local/share/bash-completion/completions}/claude-docker"
+if [[ -f "$BASH_COMPLETION_FILE" ]]; then
+    rm -f "$BASH_COMPLETION_FILE"
+    echo "  Removed $BASH_COMPLETION_FILE"
+fi
+
+ZSH_COMPLETION_FILE="$HOME/.zfunc/_claude-docker"
+if [[ -f "$ZSH_COMPLETION_FILE" ]]; then
+    rm -f "$ZSH_COMPLETION_FILE"
+    echo "  Removed $ZSH_COMPLETION_FILE"
+fi
+
+# Remove project containers (claude-docker-<hash>, but not claude-docker-global)
+echo
+echo "Checking for project containers..."
+project_containers=$(docker ps -a --filter "name=claude-docker-" --format '{{.Names}}' 2>/dev/null | grep -v "^claude-docker-global$" || true)
+if [[ -n "$project_containers" ]]; then
+    echo "Found project containers:"
+    echo "$project_containers" | sed 's/^/  /'
+    echo
+    if gum confirm "Remove these containers?"; then
+        docker rm -f $project_containers >/dev/null
+        echo "  Removed."
+    else
+        echo "  Kept."
+    fi
+fi
+
+# Remove global container
+global_container=$(docker ps -a --filter "name=claude-docker-global" --format '{{.Names}}' 2>/dev/null || true)
+if [[ -n "$global_container" ]]; then
+    echo
+    if gum confirm "Remove global container (claude-docker-global)?"; then
+        docker rm -f claude-docker-global >/dev/null
+        echo "  Removed."
+    else
+        echo "  Kept."
+    fi
+fi
+
+# Remove Docker image
+echo
+if docker image inspect "$DOCKER_IMAGE" &>/dev/null; then
+    if gum confirm "Remove Docker image ($DOCKER_IMAGE)?"; then
+        docker rmi "$DOCKER_IMAGE" >/dev/null
+        echo "  Removed."
+    else
+        echo "  Kept."
+    fi
+fi
+
+# Remove install directory (but ask about .env)
+echo
+if [[ -d "$INSTALL_DIR" ]]; then
+    if [[ -f "$INSTALL_DIR/.env" ]]; then
+        echo "Found credentials at $INSTALL_DIR/.env"
+        choice=$(gum choose "Delete everything including credentials" "Keep credentials, delete rest" "Keep everything")
+
+        case "$choice" in
+            "Delete everything including credentials")
+                rm -rf "$INSTALL_DIR"
+                echo "  Removed $INSTALL_DIR"
+                ;;
+            "Keep credentials, delete rest")
+                # Save .env, delete dir, restore .env
+                cp "$INSTALL_DIR/.env" /tmp/.claude-docker-env-backup
+                rm -rf "$INSTALL_DIR"
+                mkdir -p "$INSTALL_DIR"
+                mv /tmp/.claude-docker-env-backup "$INSTALL_DIR/.env"
+                echo "  Removed $INSTALL_DIR (kept .env)"
+                ;;
+            "Keep everything")
+                echo "  Kept $INSTALL_DIR"
+                ;;
+        esac
+    else
+        rm -rf "$INSTALL_DIR"
+        echo "  Removed $INSTALL_DIR"
+    fi
+fi
+
+echo
+echo "================================"
+echo "  Uninstall complete!"
+echo "================================"

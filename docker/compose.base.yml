@@ -1,0 +1,38 @@
+version: '3.8'
+
+# Shared configuration for all Claude containers
+# Use with: docker-compose -f compose.base.yml -f compose.global.yml up
+
+services:
+  claude:
+    platform: linux/arm64
+    image: claude-dev-ubuntu:latest
+
+    volumes:
+      # Mount setup scripts directory
+      - ./scripts:/setup-container:ro
+
+      # Mount configuration files
+      - ../config/bashrc:/etc/bash.bashrc:ro
+      - ../config/starship.toml:/root/.config/starship.toml:ro
+      - ../config/.gitconfig:/etc/gitconfig:ro
+      - ../config/gh-config.yml:/etc/gh/config.yml:ro
+
+      # Mount Docker socket for container operations
+      - /var/run/docker.sock:/var/run/docker.sock
+
+      # Mount Claude config from host if available
+      - ${HOME}/.claude.json:/root/.claude-host.json:ro
+
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - GH_TOKEN=${GITHUB_TOKEN:-}
+      - CLAUDE_CREDENTIALS=${CLAUDE_CREDENTIALS:-}
+      - GIT_USER_NAME=${GIT_USER_NAME:-}
+      - GIT_USER_EMAIL=${GIT_USER_EMAIL:-}
+      - NODE_ENV=development
+      - FORCE_COLOR=true
+      - IS_SANDBOX=1
+
+    stdin_open: true
+    tty: true
