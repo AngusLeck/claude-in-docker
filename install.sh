@@ -23,7 +23,8 @@ echo "Done building image."
 echo
 
 # Start a helper container for gum prompts (much faster than docker run each time)
-docker run -d --name "$GUM_CONTAINER" "$GUM_IMAGE" tail -f /dev/null >/dev/null
+# Use --entrypoint to bypass the default entrypoint which requires env vars
+docker run -d --name "$GUM_CONTAINER" --entrypoint "" "$GUM_IMAGE" tail -f /dev/null >/dev/null
 
 # Ensure cleanup on exit (success or failure)
 cleanup() {
