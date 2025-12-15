@@ -3,7 +3,6 @@
 set -e
 
 INSTALL_DIR="$HOME/.claude-in-docker"
-IMAGE_NAME="claude-dev-ubuntu:latest"
 REPO_URL="https://github.com/AngusLeck/claude-in-docker.git"
 TEMP_DIR="/tmp/claude-docker-update-$$"
 

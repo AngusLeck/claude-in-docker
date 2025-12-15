@@ -2,48 +2,16 @@
 # claude-docker-uninstall - Remove claude-docker installation
 set -e
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/script-dir.sh"
+source "$SCRIPT_DIR/lib/gum.sh"
+
 INSTALL_DIR="$HOME/.claude-in-docker"
-IMAGE_NAME="claude-dev-ubuntu:latest"
-
-# Get the directory where this script lives
-get_script_dir() {
-    cd "$(dirname "${BASH_SOURCE[0]}")" && pwd
-}
-
-SCRIPT_DIR="$(get_script_dir)"
+GUM_IMAGE="claude-dev-ubuntu:latest"
 
 echo "================================"
 echo "  Claude-in-Docker Uninstall"
 echo "================================"
 echo
-
-# Use gum from the Docker image if available
-gum_confirm() {
-    if docker image inspect "$IMAGE_NAME" &>/dev/null; then
-        docker run --rm -it "$IMAGE_NAME" gum confirm "$@"
-    else
-        read -p "$1 [y/N] " -n 1 -r
-        echo
-        [[ $REPLY =~ ^[Yy]$ ]]
-    fi
-}
-
-gum_choose() {
-    if docker image inspect "$IMAGE_NAME" &>/dev/null; then
-        docker run --rm -it "$IMAGE_NAME" gum choose "$@"
-    else
-        # Fallback to simple prompt
-        echo "Choose an option:"
-        local i=1
-        for opt in "$@"; do
-            echo "  $i) $opt"
-            ((i++))
-        done
-        read -p "Choice: " choice
-        local args=("$@")
-        echo "${args[$((choice-1))]}"
-    fi
-}
 
 if ! gum_confirm "Uninstall claude-docker?"; then
     echo "Cancelled."
@@ -106,9 +74,9 @@ fi
 
 # Remove Docker image
 echo
-if docker image inspect "$IMAGE_NAME" &>/dev/null; then
-    if gum_confirm "Remove Docker image ($IMAGE_NAME)?"; then
-        docker rmi "$IMAGE_NAME" >/dev/null
+if docker image inspect "$GUM_IMAGE" &>/dev/null; then
+    if gum_confirm "Remove Docker image ($GUM_IMAGE)?"; then
+        docker rmi "$GUM_IMAGE" >/dev/null
         echo "  Removed."
     else
         echo "  Kept."

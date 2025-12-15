@@ -4,44 +4,22 @@
 
 set -e
 
-# Get the directory where this script lives (resolves symlinks).
-# This allows the script to find sibling files (docker-compose.yml, config, etc.)
-# regardless of where it's called from or whether it's accessed via symlink.
-get_script_dir() {
-    cd "$(dirname "${BASH_SOURCE[0]}")" && pwd
-}
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/script-dir.sh"
+source "$SCRIPT_DIR/lib/flags.sh"
+source "$SCRIPT_DIR/lib/container.sh"
 
-SCRIPT_DIR="$(get_script_dir)"
 CONTAINER_NAME="claude-dev-env"
 
-# Parse flags
-SHELL_MODE=false
-DANGEROUS_MODE=false
-
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s|--shell) SHELL_MODE=true; shift ;;
-        -d|--dangerous) DANGEROUS_MODE=true; shift ;;
-        *) break ;;  # Rest goes to claude
-    esac
-done
+parse_mode_flags "$@"
+set -- "${REMAINING_ARGS[@]}"
 
 cd "$SCRIPT_DIR"
 
 # Ensure container is running
-if ! docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+if ! container_running; then
     echo "Starting global Claude container..."
     docker-compose up -d
-
-    # Wait for container to be ready
     sleep 2
 fi
 
-# Execute in the container
-if $SHELL_MODE; then
-    exec docker exec -it "$CONTAINER_NAME" bash
-elif $DANGEROUS_MODE; then
-    exec docker exec -it "$CONTAINER_NAME" claude --dangerously-skip-permissions "$@"
-else
-    exec docker exec -it "$CONTAINER_NAME" claude "$@"
-fi
+run_in_container "$@"

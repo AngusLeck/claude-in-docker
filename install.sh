@@ -5,7 +5,7 @@ set -e
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INSTALL_DIR="$HOME/.claude-in-docker"
 DEFAULT_BIN_DIR="$HOME/.local/bin"
-IMAGE_NAME="claude-dev-ubuntu:latest"
+GUM_IMAGE="claude-dev-ubuntu:latest"
 GUM_CONTAINER="claude-install-helper"
 
 echo "================================"
@@ -23,7 +23,7 @@ echo "Done building image."
 echo
 
 # Start a helper container for gum prompts (much faster than docker run each time)
-docker run -d --name "$GUM_CONTAINER" "$IMAGE_NAME" tail -f /dev/null >/dev/null
+docker run -d --name "$GUM_CONTAINER" "$GUM_IMAGE" tail -f /dev/null >/dev/null
 
 # Ensure cleanup on exit (success or failure)
 cleanup() {
@@ -31,18 +31,8 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Helper functions that run gum inside the container
-gum_choose() {
-    docker exec -it "$GUM_CONTAINER" gum choose "$@"
-}
-
-gum_input() {
-    docker exec -it "$GUM_CONTAINER" gum input "$@"
-}
-
-gum_confirm() {
-    docker exec -it "$GUM_CONTAINER" gum confirm "$@"
-}
+# Now source gum.sh - it will use the running GUM_CONTAINER
+source "$REPO_DIR/lib/gum.sh"
 
 # Step 2: Copy files to install directory
 echo "Step 2: Installing files"
@@ -58,6 +48,7 @@ cp "$REPO_DIR/claude-docker-global" "$INSTALL_DIR/"
 cp "$REPO_DIR/claude-docker-project" "$INSTALL_DIR/"
 cp "$REPO_DIR/claude-docker-uninstall" "$INSTALL_DIR/"
 cp "$REPO_DIR/claude-docker-update" "$INSTALL_DIR/"
+cp -r "$REPO_DIR/lib" "$INSTALL_DIR/"
 cp -r "$REPO_DIR/config" "$INSTALL_DIR/"
 cp -r "$REPO_DIR/setup-container" "$INSTALL_DIR/"
 

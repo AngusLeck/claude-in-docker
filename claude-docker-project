@@ -4,27 +4,15 @@
 
 set -e
 
-# Get the directory where this script lives (resolves symlinks).
-# This allows the script to find sibling files (docker-compose.project.yml, .env, etc.)
-# regardless of where it's called from or whether it's accessed via symlink.
-get_script_dir() {
-    cd "$(dirname "${BASH_SOURCE[0]}")" && pwd
-}
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/script-dir.sh"
+source "$SCRIPT_DIR/lib/flags.sh"
+source "$SCRIPT_DIR/lib/gum.sh"
+source "$SCRIPT_DIR/lib/container.sh"
 
-SCRIPT_DIR="$(get_script_dir)"
 PROJECT_DIR="$(pwd)"
 
-# Parse flags
-SHELL_MODE=false
-DANGEROUS_MODE=false
-
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -s|--shell) SHELL_MODE=true; shift ;;
-        -d|--dangerous) DANGEROUS_MODE=true; shift ;;
-        *) break ;;  # Rest goes to claude
-    esac
-done
+parse_mode_flags "$@"
+set -- "${REMAINING_ARGS[@]}"
 
 # Safety check: prevent mounting high-level directories
 check_safe_directory() {
@@ -48,19 +36,9 @@ check_safe_directory() {
 
     # Warn on shallow directories (less than 3 levels deep)
     if [[ $depth -lt 3 ]]; then
-        if command -v gum &>/dev/null; then
-            if ! gum confirm "Warning: '$dir' is a high-level directory. Mount anyway?"; then
-                echo "Cancelled."
-                exit 1
-            fi
-        else
-            echo "Warning: '$dir' is a high-level directory (only $depth levels deep)."
-            read -p "Are you sure you want to mount this directory? [y/N] " -n 1 -r
-            echo
-            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-                echo "Cancelled."
-                exit 1
-            fi
+        if ! gum_confirm "Warning: '$dir' is a high-level directory. Mount anyway?"; then
+            echo "Cancelled."
+            exit 1
         fi
     fi
 }
@@ -70,15 +48,6 @@ check_safe_directory "$PROJECT_DIR"
 # Generate deterministic container name from path
 CONTAINER_HASH=$(echo "$PROJECT_DIR" | sha256sum | cut -c1-12)
 CONTAINER_NAME="claude-project-${CONTAINER_HASH}"
-
-# Check if container already exists
-container_exists() {
-    docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"
-}
-
-container_running() {
-    docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"
-}
 
 # Determine which env file to use
 if [[ -f "$HOME/.claude-in-docker/.env" ]]; then
@@ -91,23 +60,11 @@ else
     exit 1
 fi
 
-# Helper to run the appropriate command in the container
-run_in_container() {
-    if $SHELL_MODE; then
-        exec docker exec -it "$CONTAINER_NAME" bash
-    elif $DANGEROUS_MODE; then
-        exec docker exec -it "$CONTAINER_NAME" claude --dangerously-skip-permissions "$@"
-    else
-        exec docker exec -it "$CONTAINER_NAME" claude "$@"
-    fi
-}
-
 if container_exists; then
     # Container exists - start if needed and exec
     if ! container_running; then
         echo "Starting existing container for $(basename "$PROJECT_DIR")..."
-        docker start "$CONTAINER_NAME" >/dev/null
-        sleep 1
+        ensure_container_running
     fi
     run_in_container "$@"
 else
@@ -120,8 +77,6 @@ else
 
     cd "$SCRIPT_DIR"
     docker-compose -f docker-compose.project.yml -p "$CONTAINER_NAME" --env-file "$ENV_FILE" up -d
-
-    # Wait for container to be ready
     sleep 2
 
     run_in_container "$@"
