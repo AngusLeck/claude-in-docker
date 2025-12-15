@@ -61,7 +61,7 @@ RUN mkdir -p /workspace/repos /root/.claude
 WORKDIR /workspace
 
 # Copy and set entrypoint
-COPY setup-container/entrypoint.sh /entrypoint.sh
+COPY scripts/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["bash"]

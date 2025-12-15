@@ -9,21 +9,31 @@ set -e
 # - dirname: extracts the directory portion
 # - cd && pwd: resolves to absolute path, following symlinks
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
-source "$SCRIPT_DIR/lib/flags.sh"
-source "$SCRIPT_DIR/lib/container.sh"
+source "$ROOT_DIR/lib/flags.sh"
+source "$ROOT_DIR/lib/container.sh"
 
 CONTAINER_NAME="claude-docker-global"
 
 parse_mode_flags "$@"
 set -- "${REMAINING_ARGS[@]}"
 
-cd "$SCRIPT_DIR"
+# Determine which env file to use
+if [[ -f "$ROOT_DIR/.env" ]]; then
+    ENV_FILE="$ROOT_DIR/.env"
+else
+    echo "Error: No credentials found."
+    echo "Either run 'install.sh' or create a .env file in $ROOT_DIR"
+    exit 1
+fi
+
+cd "$ROOT_DIR/docker"
 
 # Ensure container is running
 if ! container_running; then
     echo "Starting global Claude container..."
-    docker-compose -f docker-compose.base.yml -f docker-compose.global.yml up -d
+    docker-compose -f compose.base.yml -f compose.global.yml --env-file "$ENV_FILE" up -d
     sleep 2
 fi
 

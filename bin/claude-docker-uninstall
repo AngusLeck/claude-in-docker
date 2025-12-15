@@ -7,8 +7,9 @@ set -e
 # - dirname: extracts the directory portion
 # - cd && pwd: resolves to absolute path, following symlinks
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
-source "$SCRIPT_DIR/lib/gum.sh"
+source "$ROOT_DIR/lib/gum.sh"
 
 INSTALL_DIR="$HOME/.claude-in-docker"
 GUM_IMAGE="claude-dev-ubuntu:latest"

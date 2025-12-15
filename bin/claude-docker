@@ -9,6 +9,7 @@ set -e
 # - dirname: extracts the directory portion
 # - cd && pwd: resolves to absolute path, following symlinks
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
 case "$1" in
     --uninstall)
@@ -18,7 +19,7 @@ case "$1" in
         exec "$SCRIPT_DIR/claude-docker-update"
         ;;
     --workspace|-w)
-        echo "$SCRIPT_DIR/workspace"
+        echo "$ROOT_DIR/workspace"
         exit 0
         ;;
     -g|--global)

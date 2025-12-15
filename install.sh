@@ -17,8 +17,8 @@ echo
 echo "Step 1: Building Docker image"
 echo "-----------------------------"
 
-cd "$REPO_DIR"
-docker-compose -f docker-compose.base.yml -f docker-compose.global.yml build
+cd "$REPO_DIR/docker"
+docker-compose -f compose.base.yml -f compose.global.yml build
 echo "Done building image."
 echo
 
@@ -40,28 +40,18 @@ echo "------------------------"
 
 mkdir -p "$INSTALL_DIR"
 
-# Copy all necessary files
-cp "$REPO_DIR/docker-compose.base.yml" "$INSTALL_DIR/"
-cp "$REPO_DIR/docker-compose.global.yml" "$INSTALL_DIR/"
-cp "$REPO_DIR/docker-compose.project.yml" "$INSTALL_DIR/"
-cp "$REPO_DIR/claude-docker" "$INSTALL_DIR/"
-cp "$REPO_DIR/claude-docker-global" "$INSTALL_DIR/"
-cp "$REPO_DIR/claude-docker-project" "$INSTALL_DIR/"
-cp "$REPO_DIR/claude-docker-uninstall" "$INSTALL_DIR/"
-cp "$REPO_DIR/claude-docker-update" "$INSTALL_DIR/"
+# Copy directory structure
+cp -r "$REPO_DIR/bin" "$INSTALL_DIR/"
+cp -r "$REPO_DIR/docker" "$INSTALL_DIR/"
 cp -r "$REPO_DIR/lib" "$INSTALL_DIR/"
 cp -r "$REPO_DIR/config" "$INSTALL_DIR/"
-cp -r "$REPO_DIR/setup-container" "$INSTALL_DIR/"
+cp -r "$REPO_DIR/completions" "$INSTALL_DIR/"
 
 # Create workspace directory for global mode
 mkdir -p "$INSTALL_DIR/workspace"
 
 # Make scripts executable
-chmod +x "$INSTALL_DIR/claude-docker"
-chmod +x "$INSTALL_DIR/claude-docker-global"
-chmod +x "$INSTALL_DIR/claude-docker-project"
-chmod +x "$INSTALL_DIR/claude-docker-uninstall"
-chmod +x "$INSTALL_DIR/claude-docker-update"
+chmod +x "$INSTALL_DIR/bin/"*
 
 echo "Files installed to $INSTALL_DIR"
 echo
@@ -160,9 +150,9 @@ fi
 
 # Create symlink (remove old one if exists)
 rm -f "$BIN_DIR/claude-docker"
-ln -s "$INSTALL_DIR/claude-docker" "$BIN_DIR/claude-docker"
+ln -s "$INSTALL_DIR/bin/claude-docker" "$BIN_DIR/claude-docker"
 
-echo "Symlink created: $BIN_DIR/claude-docker -> $INSTALL_DIR/claude-docker"
+echo "Symlink created: $BIN_DIR/claude-docker -> $INSTALL_DIR/bin/claude-docker"
 echo
 
 # Check if BIN_DIR is in PATH

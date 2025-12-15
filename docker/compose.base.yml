@@ -1,7 +1,7 @@
 version: '3.8'
 
 # Shared configuration for all Claude containers
-# Use with: docker-compose -f docker-compose.base.yml -f docker-compose.yml up
+# Use with: docker-compose -f compose.base.yml -f compose.global.yml up
 
 services:
   claude:
@@ -10,13 +10,13 @@ services:
 
     volumes:
       # Mount setup scripts directory
-      - ./setup-container:/setup-container:ro
+      - ./scripts:/setup-container:ro
 
       # Mount configuration files
-      - ./config/bashrc:/etc/bash.bashrc:ro
-      - ./config/starship.toml:/root/.config/starship.toml:ro
-      - ./config/.gitconfig:/etc/gitconfig:ro
-      - ./config/gh-config.yml:/etc/gh/config.yml:ro
+      - ../config/bashrc:/etc/bash.bashrc:ro
+      - ../config/starship.toml:/root/.config/starship.toml:ro
+      - ../config/.gitconfig:/etc/gitconfig:ro
+      - ../config/gh-config.yml:/etc/gh/config.yml:ro
 
       # Mount Docker socket for container operations
       - /var/run/docker.sock:/var/run/docker.sock

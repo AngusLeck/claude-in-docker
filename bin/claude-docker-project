@@ -10,9 +10,10 @@ set -e
 # - dirname: extracts the directory portion
 # - cd && pwd: resolves to absolute path, following symlinks
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
-source "$SCRIPT_DIR/lib/flags.sh"
-source "$SCRIPT_DIR/lib/gum.sh"
+source "$ROOT_DIR/lib/flags.sh"
+source "$ROOT_DIR/lib/gum.sh"
 
 PROJECT_DIR="$(pwd)"
 
@@ -53,11 +54,11 @@ check_safe_directory "$PROJECT_DIR"
 # Determine which env file to use
 if [[ -f "$HOME/.claude-in-docker/.env" ]]; then
     ENV_FILE="$HOME/.claude-in-docker/.env"
-elif [[ -f "$SCRIPT_DIR/.env" ]]; then
-    ENV_FILE="$SCRIPT_DIR/.env"
+elif [[ -f "$ROOT_DIR/.env" ]]; then
+    ENV_FILE="$ROOT_DIR/.env"
 else
     echo "Error: No credentials found."
-    echo "Either run 'install.sh' or create a .env file in $SCRIPT_DIR"
+    echo "Either run 'install.sh' or create a .env file in $ROOT_DIR"
     exit 1
 fi
 
@@ -74,7 +75,7 @@ else
 fi
 
 # Run container - it will be removed when you exit
-cd "$SCRIPT_DIR"
-exec docker-compose -f docker-compose.base.yml -f docker-compose.project.yml \
+cd "$ROOT_DIR/docker"
+exec docker-compose -f compose.base.yml -f compose.project.yml \
     --env-file "$ENV_FILE" \
     run --rm claude $CMD "$@"
