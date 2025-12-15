@@ -4,7 +4,14 @@
 
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Get the directory where this script lives (resolves symlinks).
+# This allows the script to find sibling files (docker-compose.yml, config, etc.)
+# regardless of where it's called from or whether it's accessed via symlink.
+get_script_dir() {
+    cd "$(dirname "${BASH_SOURCE[0]}")" && pwd
+}
+
+SCRIPT_DIR="$(get_script_dir)"
 CONTAINER_NAME="claude-dev-env"
 
 cd "$SCRIPT_DIR"

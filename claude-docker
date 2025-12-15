@@ -4,7 +4,14 @@
 
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Get the directory where this script lives (resolves symlinks).
+# This allows the script to find sibling files (other scripts, config, etc.)
+# regardless of where it's called from or whether it's accessed via symlink.
+get_script_dir() {
+    cd "$(dirname "${BASH_SOURCE[0]}")" && pwd
+}
+
+SCRIPT_DIR="$(get_script_dir)"
 
 # Check for global mode flag
 if [[ "$1" == "-g" ]] || [[ "$1" == "--global" ]]; then
