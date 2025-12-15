@@ -14,6 +14,18 @@ get_script_dir() {
 SCRIPT_DIR="$(get_script_dir)"
 PROJECT_DIR="$(pwd)"
 
+# Parse flags
+SHELL_MODE=false
+DANGEROUS_MODE=false
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -s|--shell) SHELL_MODE=true; shift ;;
+        -d|--dangerous) DANGEROUS_MODE=true; shift ;;
+        *) break ;;  # Rest goes to claude
+    esac
+done
+
 # Safety check: prevent mounting high-level directories
 check_safe_directory() {
     local dir="$1"
@@ -79,6 +91,17 @@ else
     exit 1
 fi
 
+# Helper to run the appropriate command in the container
+run_in_container() {
+    if $SHELL_MODE; then
+        exec docker exec -it "$CONTAINER_NAME" bash
+    elif $DANGEROUS_MODE; then
+        exec docker exec -it "$CONTAINER_NAME" claude --dangerously-skip-permissions "$@"
+    else
+        exec docker exec -it "$CONTAINER_NAME" claude "$@"
+    fi
+}
+
 if container_exists; then
     # Container exists - start if needed and exec
     if ! container_running; then
@@ -86,7 +109,7 @@ if container_exists; then
         docker start "$CONTAINER_NAME" >/dev/null
         sleep 1
     fi
-    exec docker exec -it "$CONTAINER_NAME" claude "$@"
+    run_in_container "$@"
 else
     # Create new container using docker-compose
     echo "Creating new container for $(basename "$PROJECT_DIR")..."
@@ -101,5 +124,5 @@ else
     # Wait for container to be ready
     sleep 2
 
-    exec docker exec -it "$CONTAINER_NAME" claude "$@"
+    run_in_container "$@"
 fi

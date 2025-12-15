@@ -111,6 +111,17 @@ claude-docker
 # Global mode - run Claude in persistent workspace
 claude-docker -g
 
+# Open a shell instead of claude
+claude-docker -s           # Shell in project container
+claude-docker -g -s        # Shell in global container
+
+# Run claude in dangerous mode (--dangerously-skip-permissions)
+claude-docker -d
+claude-docker -g -d
+
+# Pass additional args to claude
+claude-docker --resume
+
 # Update to latest version
 claude-docker --update
 

@@ -14,6 +14,18 @@ get_script_dir() {
 SCRIPT_DIR="$(get_script_dir)"
 CONTAINER_NAME="claude-dev-env"
 
+# Parse flags
+SHELL_MODE=false
+DANGEROUS_MODE=false
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -s|--shell) SHELL_MODE=true; shift ;;
+        -d|--dangerous) DANGEROUS_MODE=true; shift ;;
+        *) break ;;  # Rest goes to claude
+    esac
+done
+
 cd "$SCRIPT_DIR"
 
 # Ensure container is running
@@ -25,5 +37,11 @@ if ! docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
     sleep 2
 fi
 
-# Execute claude in the container
-exec docker exec -it "$CONTAINER_NAME" claude "$@"
+# Execute in the container
+if $SHELL_MODE; then
+    exec docker exec -it "$CONTAINER_NAME" bash
+elif $DANGEROUS_MODE; then
+    exec docker exec -it "$CONTAINER_NAME" claude --dangerously-skip-permissions "$@"
+else
+    exec docker exec -it "$CONTAINER_NAME" claude "$@"
+fi

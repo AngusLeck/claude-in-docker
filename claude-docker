@@ -33,11 +33,22 @@ case "$1" in
         echo "  (default)      Project mode - mount current directory"
         echo "  -g, --global   Global mode - persistent workspace"
         echo
+        echo "Options:"
+        echo "  -s, --shell    Open bash shell instead of claude"
+        echo "  -d, --dangerous Run claude with --dangerously-skip-permissions"
+        echo
         echo "Management:"
         echo "  --update       Update to latest version"
         echo "  --uninstall    Remove claude-docker"
         echo
         echo "  --help, -h     Show this help"
+        echo
+        echo "Examples:"
+        echo "  claude-docker              Run claude in current directory"
+        echo "  claude-docker -g           Run claude in global workspace"
+        echo "  claude-docker -s           Open shell in project container"
+        echo "  claude-docker -g -s        Open shell in global container"
+        echo "  claude-docker -d           Run claude in dangerous mode"
         exit 0
         ;;
     *)
