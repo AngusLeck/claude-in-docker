@@ -4,11 +4,14 @@
 
 set -e
 
-# Get directory where this script lives, resolving symlinks.
-# - BASH_SOURCE[0]: path used to invoke this script (may be a symlink)
-# - dirname: extracts the directory portion
-# - cd && pwd: resolves to absolute path, following symlinks
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Resolve symlinks to get the actual script location
+SCRIPT_PATH="${BASH_SOURCE[0]}"
+while [[ -L "$SCRIPT_PATH" ]]; do
+    LINK_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
+    SCRIPT_PATH="$(readlink "$SCRIPT_PATH")"
+    [[ "$SCRIPT_PATH" != /* ]] && SCRIPT_PATH="$LINK_DIR/$SCRIPT_PATH"
+done
+SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
 case "$1" in
