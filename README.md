@@ -122,6 +122,11 @@ claude-docker -g -d
 # Pass additional args to claude
 claude-docker --resume
 
+# Get global workspace path (for IDE access)
+claude-docker -w                    # Prints path
+cd $(claude-docker -w)              # Navigate to workspace
+cursor $(claude-docker -w)          # Open in IDE
+
 # Update to latest version
 claude-docker --update
 
