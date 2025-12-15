@@ -73,56 +73,6 @@ install_gum() {
 
 install_gum
 
-# Gum wrapper functions (use gum directly, fall back to plain prompts)
-gum_confirm() {
-    local prompt="$1"
-    if command -v gum &>/dev/null; then
-        gum confirm "$prompt"
-    else
-        read -p "$prompt [y/N] " -n 1 -r
-        echo
-        [[ $REPLY =~ ^[Yy]$ ]]
-    fi
-}
-
-gum_choose() {
-    if command -v gum &>/dev/null; then
-        gum choose "$@"
-    else
-        local options=("$@")
-        local i=1
-        for opt in "${options[@]}"; do
-            echo "  $i) $opt" >&2
-            ((i++))
-        done
-        read -p "Choice [1-${#options[@]}]: " choice
-        echo "${options[$((choice-1))]}"
-    fi
-}
-
-gum_input() {
-    if command -v gum &>/dev/null; then
-        gum input "$@"
-    else
-        local placeholder="" value="" password=false
-        while [[ $# -gt 0 ]]; do
-            case "$1" in
-                --placeholder) placeholder="$2"; shift 2 ;;
-                --value) value="$2"; shift 2 ;;
-                --password) password=true; shift ;;
-                *) shift ;;
-            esac
-        done
-        if $password; then
-            read -sp "$placeholder: " input
-            echo >&2
-        else
-            read -p "$placeholder [$value]: " input
-        fi
-        echo "${input:-$value}"
-    fi
-}
-
 # Step 2: Copy files to install directory
 echo "Step 2: Installing files"
 echo "------------------------"
@@ -151,7 +101,7 @@ echo "-----------------------------"
 
 # Check if .env already exists
 if [[ -f "$INSTALL_DIR/.env" ]]; then
-    if ! gum_confirm "Credentials already exist. Overwrite?"; then
+    if ! gum confirm "Credentials already exist. Overwrite?"; then
         echo "Keeping existing credentials."
         SKIP_CREDENTIALS=true
     else
@@ -163,7 +113,7 @@ else
 fi
 
 if [[ "$SKIP_CREDENTIALS" == "false" ]]; then
-    method=$(gum_choose "Enter credentials interactively" "Edit config file in editor")
+    method=$(gum choose "Enter credentials interactively" "Edit config file in editor")
 
     if [[ "$method" == "Enter credentials interactively" ]]; then
         # Try to auto-detect existing values
@@ -176,25 +126,25 @@ if [[ "$SKIP_CREDENTIALS" == "false" ]]; then
 
         echo
         echo "Git Configuration:"
-        GIT_USER_NAME=$(gum_input --placeholder "Git user name" --value "$DEFAULT_GIT_NAME")
-        GIT_USER_EMAIL=$(gum_input --placeholder "Git user email" --value "$DEFAULT_GIT_EMAIL")
+        GIT_USER_NAME=$(gum input --placeholder "Git user name" --value "$DEFAULT_GIT_NAME")
+        GIT_USER_EMAIL=$(gum input --placeholder "Git user email" --value "$DEFAULT_GIT_EMAIL")
 
         echo
         echo "GitHub Token:"
         if [[ -n "$DEFAULT_GH_TOKEN" ]]; then
-            if gum_confirm "Found GitHub token from gh CLI. Use it?"; then
+            if gum confirm "Found GitHub token from gh CLI. Use it?"; then
                 GITHUB_TOKEN="$DEFAULT_GH_TOKEN"
             else
-                GITHUB_TOKEN=$(gum_input --password --placeholder "GitHub personal access token")
+                GITHUB_TOKEN=$(gum input --password --placeholder "GitHub personal access token")
             fi
         else
-            GITHUB_TOKEN=$(gum_input --password --placeholder "GitHub personal access token")
+            GITHUB_TOKEN=$(gum input --password --placeholder "GitHub personal access token")
         fi
 
         echo
         echo "Claude Credentials:"
         echo "(Paste the JSON from ~/.claude/.credentials.json or leave empty to use ~/.claude.json)"
-        CLAUDE_CREDENTIALS=$(gum_input --password --placeholder "Claude credentials JSON (optional)")
+        CLAUDE_CREDENTIALS=$(gum input --password --placeholder "Claude credentials JSON (optional)")
 
         # Write .env file
         cat > "$INSTALL_DIR/.env" << EOF
@@ -213,7 +163,7 @@ EOF
         # Copy template and open in editor
         cp "$REPO_DIR/.env.example" "$INSTALL_DIR/.env"
 
-        EDITOR_CHOICE=$(gum_choose "${EDITOR:-vim}" "vim" "nano")
+        EDITOR_CHOICE=$(gum choose "${EDITOR:-vim}" "vim" "nano")
 
         echo "Opening $INSTALL_DIR/.env in $EDITOR_CHOICE..."
         echo "Save and close when done."
@@ -233,7 +183,7 @@ if [[ -d "$DEFAULT_BIN_DIR" ]] && [[ ":$PATH:" == *":$DEFAULT_BIN_DIR:"* ]]; the
     BIN_DIR="$DEFAULT_BIN_DIR"
 else
     echo "Default location $DEFAULT_BIN_DIR is not in PATH."
-    BIN_DIR=$(gum_input --placeholder "Symlink location" --value "$DEFAULT_BIN_DIR")
+    BIN_DIR=$(gum input --placeholder "Symlink location" --value "$DEFAULT_BIN_DIR")
     mkdir -p "$BIN_DIR"
 fi
 
