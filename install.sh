@@ -22,42 +22,105 @@ docker-compose -f compose.base.yml -f compose.global.yml build
 echo "Done building image."
 echo
 
-# Simple prompt functions for install (no Docker/gum dependency)
+# Install gum if not present
+install_gum() {
+    if command -v gum &>/dev/null; then
+        return 0
+    fi
+
+    echo "Installing gum for interactive prompts..."
+
+    local os arch gum_url gum_version="0.14.0"
+    os=$(uname -s | tr '[:upper:]' '[:lower:]')
+    arch=$(uname -m)
+
+    # Normalize architecture names
+    case "$arch" in
+        x86_64) arch="x86_64" ;;
+        aarch64|arm64) arch="arm64" ;;
+        *) echo "Unsupported architecture: $arch"; return 1 ;;
+    esac
+
+    # Normalize OS names
+    case "$os" in
+        darwin) os="Darwin" ;;
+        linux) os="Linux" ;;
+        *) echo "Unsupported OS: $os"; return 1 ;;
+    esac
+
+    gum_url="https://github.com/charmbracelet/gum/releases/download/v${gum_version}/gum_${gum_version}_${os}_${arch}.tar.gz"
+
+    local tmp_dir=$(mktemp -d)
+    if curl -fsSL "$gum_url" | tar -xzC "$tmp_dir"; then
+        # Install to ~/.local/bin
+        mkdir -p "$HOME/.local/bin"
+        mv "$tmp_dir/gum" "$HOME/.local/bin/"
+        chmod +x "$HOME/.local/bin/gum"
+        rm -rf "$tmp_dir"
+
+        # Add to PATH for this session if needed
+        if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+            export PATH="$HOME/.local/bin:$PATH"
+        fi
+
+        echo "Gum installed to ~/.local/bin/gum"
+    else
+        rm -rf "$tmp_dir"
+        echo "Failed to install gum"
+        return 1
+    fi
+}
+
+install_gum
+
+# Gum wrapper functions (use gum directly, fall back to plain prompts)
 gum_confirm() {
     local prompt="$1"
-    read -p "$prompt [y/N] " -n 1 -r
-    echo
-    [[ $REPLY =~ ^[Yy]$ ]]
+    if command -v gum &>/dev/null; then
+        gum confirm "$prompt"
+    else
+        read -p "$prompt [y/N] " -n 1 -r
+        echo
+        [[ $REPLY =~ ^[Yy]$ ]]
+    fi
 }
 
 gum_choose() {
-    local options=("$@")
-    local i=1
-    for opt in "${options[@]}"; do
-        echo "  $i) $opt" >&2
-        ((i++))
-    done
-    read -p "Choice [1-${#options[@]}]: " choice
-    echo "${options[$((choice-1))]}"
+    if command -v gum &>/dev/null; then
+        gum choose "$@"
+    else
+        local options=("$@")
+        local i=1
+        for opt in "${options[@]}"; do
+            echo "  $i) $opt" >&2
+            ((i++))
+        done
+        read -p "Choice [1-${#options[@]}]: " choice
+        echo "${options[$((choice-1))]}"
+    fi
 }
 
 gum_input() {
-    local placeholder="" value="" password=false
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
-            --placeholder) placeholder="$2"; shift 2 ;;
-            --value) value="$2"; shift 2 ;;
-            --password) password=true; shift ;;
-            *) shift ;;
-        esac
-    done
-    if $password; then
-        read -sp "$placeholder: " input
-        echo >&2
+    if command -v gum &>/dev/null; then
+        gum input "$@"
     else
-        read -p "$placeholder [$value]: " input
+        local placeholder="" value="" password=false
+        while [[ $# -gt 0 ]]; do
+            case "$1" in
+                --placeholder) placeholder="$2"; shift 2 ;;
+                --value) value="$2"; shift 2 ;;
+                --password) password=true; shift ;;
+                *) shift ;;
+            esac
+        done
+        if $password; then
+            read -sp "$placeholder: " input
+            echo >&2
+        else
+            read -p "$placeholder [$value]: " input
+        fi
+        echo "${input:-$value}"
     fi
-    echo "${input:-$value}"
 }
 
 # Step 2: Copy files to install directory
