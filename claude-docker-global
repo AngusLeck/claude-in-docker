@@ -1,0 +1,22 @@
+#!/bin/bash
+# claude-docker-global - Run Claude in global/workspace mode
+# Long-running container with persistent workspace
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONTAINER_NAME="claude-dev-env"
+
+cd "$SCRIPT_DIR"
+
+# Ensure container is running
+if ! docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+    echo "Starting global Claude container..."
+    docker-compose up -d
+
+    # Wait for container to be ready
+    sleep 2
+fi
+
+# Execute claude in the container
+exec docker exec -it "$CONTAINER_NAME" claude "$@"

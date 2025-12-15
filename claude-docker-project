@@ -1,0 +1,98 @@
+#!/bin/bash
+# claude-docker-project - Run Claude in project mode
+# Per-directory container that mounts current working directory
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(pwd)"
+
+# Safety check: prevent mounting high-level directories
+check_safe_directory() {
+    local dir="$1"
+    local depth
+    depth=$(echo "$dir" | tr -cd '/' | wc -c)
+
+    # Block root and single-level directories
+    if [[ "$dir" == "/" ]]; then
+        echo "Error: Cannot mount root directory. Please cd into a project directory."
+        exit 1
+    fi
+
+    # Block common dangerous paths
+    case "$dir" in
+        /home|/Users|/root|/etc|/var|/usr|/bin|/sbin|/lib|/opt)
+            echo "Error: Cannot mount system directory '$dir'. Please cd into a project directory."
+            exit 1
+            ;;
+    esac
+
+    # Warn on shallow directories (less than 3 levels deep)
+    if [[ $depth -lt 3 ]]; then
+        if command -v gum &>/dev/null; then
+            if ! gum confirm "Warning: '$dir' is a high-level directory. Mount anyway?"; then
+                echo "Cancelled."
+                exit 1
+            fi
+        else
+            echo "Warning: '$dir' is a high-level directory (only $depth levels deep)."
+            read -p "Are you sure you want to mount this directory? [y/N] " -n 1 -r
+            echo
+            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                echo "Cancelled."
+                exit 1
+            fi
+        fi
+    fi
+}
+
+check_safe_directory "$PROJECT_DIR"
+
+# Generate deterministic container name from path
+CONTAINER_HASH=$(echo "$PROJECT_DIR" | sha256sum | cut -c1-12)
+CONTAINER_NAME="claude-project-${CONTAINER_HASH}"
+
+# Check if container already exists
+container_exists() {
+    docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"
+}
+
+container_running() {
+    docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"
+}
+
+# Determine which env file to use
+if [[ -f "$HOME/.claude-in-docker/.env" ]]; then
+    ENV_FILE="$HOME/.claude-in-docker/.env"
+elif [[ -f "$SCRIPT_DIR/.env" ]]; then
+    ENV_FILE="$SCRIPT_DIR/.env"
+else
+    echo "Error: No credentials found."
+    echo "Either run 'install.sh' or create a .env file in $SCRIPT_DIR"
+    exit 1
+fi
+
+if container_exists; then
+    # Container exists - start if needed and exec
+    if ! container_running; then
+        echo "Starting existing container for $(basename "$PROJECT_DIR")..."
+        docker start "$CONTAINER_NAME" >/dev/null
+        sleep 1
+    fi
+    exec docker exec -it "$CONTAINER_NAME" claude "$@"
+else
+    # Create new container using docker-compose
+    echo "Creating new container for $(basename "$PROJECT_DIR")..."
+
+    export PROJECT_DIR
+    export CONTAINER_NAME
+    export ENV_FILE
+
+    cd "$SCRIPT_DIR"
+    docker-compose -f docker-compose.project.yml -p "$CONTAINER_NAME" --env-file "$ENV_FILE" up -d
+
+    # Wait for container to be ready
+    sleep 2
+
+    exec docker exec -it "$CONTAINER_NAME" claude "$@"
+fi

@@ -1,0 +1,15 @@
+#!/bin/bash
+# claude-docker - Run Claude in a Docker container
+# Routes to either global mode (-g) or project mode (default)
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Check for global mode flag
+if [[ "$1" == "-g" ]] || [[ "$1" == "--global" ]]; then
+    shift
+    exec "$SCRIPT_DIR/claude-docker-global" "$@"
+else
+    exec "$SCRIPT_DIR/claude-docker-project" "$@"
+fi
