@@ -13,6 +13,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
 source "$ROOT_DIR/lib/flags.sh"
+source "$ROOT_DIR/lib/credentials.sh"
 
 PROJECT_DIR="$(pwd)"
 
@@ -63,6 +64,9 @@ fi
 
 export PROJECT_DIR
 export ENV_FILE
+
+# Detect Claude credentials at runtime
+detect_claude_credentials
 
 # Determine command to run based on flags
 if $SHELL_MODE; then

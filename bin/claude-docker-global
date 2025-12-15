@@ -13,6 +13,7 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
 source "$ROOT_DIR/lib/flags.sh"
 source "$ROOT_DIR/lib/container.sh"
+source "$ROOT_DIR/lib/credentials.sh"
 
 CONTAINER_NAME="claude-docker-global"
 
@@ -29,6 +30,9 @@ else
 fi
 
 cd "$ROOT_DIR/docker"
+
+# Detect Claude credentials at runtime
+detect_claude_credentials
 
 # Ensure container is running
 if ! container_running; then
