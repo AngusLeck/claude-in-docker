@@ -5,8 +5,6 @@ set -e
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INSTALL_DIR="$HOME/.claude-in-docker"
 DEFAULT_BIN_DIR="$HOME/.local/bin"
-GUM_IMAGE="claude-dev-ubuntu:latest"
-GUM_CONTAINER="claude-install-helper"
 
 echo "================================"
 echo "  Claude-in-Docker Installer"
