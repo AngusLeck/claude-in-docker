@@ -7,6 +7,6 @@ version: '3.8'
 services:
   claude:
     volumes:
-      - ${PROJECT_DIR}:/workspace/${PROJECT_NAME}
+      - ${PROJECT_DIR}:/workspace/repos/${PROJECT_NAME}
 
-    working_dir: /workspace/${PROJECT_NAME}
+    working_dir: /workspace/repos/${PROJECT_NAME}
