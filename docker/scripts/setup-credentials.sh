@@ -3,19 +3,6 @@ set -e
 
 echo "Setting up container credentials..."
 
-# Copy root-level claude config if it exists
-if [ -f /root/.claude-host.json ]; then
-    echo "✓ Copying Claude configuration from host"
-    cp /root/.claude-host.json /root/.claude.json
-fi
-
-# Populate credentials from environment variable
-if [ -n "$CLAUDE_CREDENTIALS" ]; then
-    echo "✓ Setting up Claude credentials"
-    mkdir -p /root/.claude
-    echo "$CLAUDE_CREDENTIALS" > /root/.claude/.credentials.json
-fi
-
 # Configure Git to use GitHub token for HTTPS
 if [ -n "$GITHUB_TOKEN" ]; then
     echo "✓ Configuring GitHub authentication"

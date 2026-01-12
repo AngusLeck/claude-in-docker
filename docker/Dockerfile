@@ -59,8 +59,8 @@ RUN curl -fsSL https://github.com/cli/cli/releases/download/v2.40.0/gh_2.40.0_li
 # Install Yarn and Claude CLI globally
 RUN npm install -g yarn @anthropic-ai/claude-code
 
-# Setup workspace and claude directories  
-RUN mkdir -p /workspace/repos /root/.claude
+# Setup workspace directory (Claude config mounted from host)
+RUN mkdir -p /workspace/repos
 
 # Set working directory
 WORKDIR /workspace
