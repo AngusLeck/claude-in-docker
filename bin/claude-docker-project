@@ -16,6 +16,7 @@ source "$ROOT_DIR/lib/flags.sh"
 source "$ROOT_DIR/lib/credentials.sh"
 
 PROJECT_DIR="$(pwd)"
+PROJECT_NAME="$(basename "$PROJECT_DIR")"
 
 parse_mode_flags "$@"
 set -- "${REMAINING_ARGS[@]}"
@@ -63,6 +64,7 @@ else
 fi
 
 export PROJECT_DIR
+export PROJECT_NAME
 export ENV_FILE
 
 # Detect Claude credentials at runtime
