@@ -21,13 +21,13 @@ services:
       # Mount Docker socket for container operations
       - /var/run/docker.sock:/var/run/docker.sock
 
-      # Mount Claude config from host if available
-      - ${HOME}/.claude.json:/root/.claude-host.json:ro
+      # Mount Claude config from host (shared read/write for persistent settings)
+      - ${HOME}/.claude.json:/root/.claude.json:rw
+      - ${HOME}/.claude:/root/.claude:rw
 
     environment:
       - GITHUB_TOKEN=${GITHUB_TOKEN:-}
       - GH_TOKEN=${GITHUB_TOKEN:-}
-      - CLAUDE_CREDENTIALS=${CLAUDE_CREDENTIALS:-}
       - GIT_USER_NAME=${GIT_USER_NAME:-}
       - GIT_USER_EMAIL=${GIT_USER_EMAIL:-}
       - NODE_ENV=development
