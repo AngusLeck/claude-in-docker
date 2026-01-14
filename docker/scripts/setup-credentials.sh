@@ -21,4 +21,10 @@ if [ -n "$GIT_USER_EMAIL" ]; then
     git config --global user.email "$GIT_USER_EMAIL"
 fi
 
+# Configure NPM token for private registry access
+if [ -n "$NPM_TOKEN" ]; then
+    echo "✓ Configuring NPM authentication"
+    npm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"
+fi
+
 echo "Credential setup complete!"
