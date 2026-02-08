@@ -1,7 +1,7 @@
 version: '3.8'
 
 # Shared configuration for all Claude containers
-# Use with: docker-compose -f compose.base.yml -f compose.global.yml up
+# Use with: docker compose -f compose.base.yml -f compose.global.yml up
 
 services:
   claude:

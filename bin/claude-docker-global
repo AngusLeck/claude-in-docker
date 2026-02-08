@@ -37,7 +37,7 @@ detect_claude_credentials
 # Ensure container is running
 if ! container_running; then
     echo "Starting global Claude container..."
-    docker-compose -f compose.base.yml -f compose.global.yml --env-file "$ENV_FILE" up -d
+    docker compose -f compose.base.yml -f compose.global.yml --env-file "$ENV_FILE" up -d
     sleep 2
 fi
 

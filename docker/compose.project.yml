@@ -1,7 +1,7 @@
 version: '3.8'
 
 # Project mode: Per-directory container that mounts the current project
-# Use with: docker-compose -f compose.base.yml -f compose.project.yml run --rm claude
+# Use with: docker compose -f compose.base.yml -f compose.project.yml run --rm claude
 # Requires environment variables: PROJECT_DIR, PROJECT_NAME
 
 services:

@@ -122,7 +122,7 @@ choose_install_location() {
 
 build_docker_image() {
     cd "$REPO_DIR/docker"
-    docker-compose -f compose.base.yml -f compose.global.yml build
+    docker compose -f compose.base.yml -f compose.global.yml build
     echo "Done."
 }
 

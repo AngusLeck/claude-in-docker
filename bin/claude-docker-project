@@ -81,6 +81,6 @@ fi
 
 # Run container - it will be removed when you exit
 cd "$ROOT_DIR/docker"
-exec docker-compose -f compose.base.yml -f compose.project.yml \
+exec docker compose -f compose.base.yml -f compose.project.yml \
     --env-file "$ENV_FILE" \
     run --rm claude $CMD "$@"
