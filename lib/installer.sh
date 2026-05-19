@@ -103,7 +103,8 @@ configure_credentials() {
 GIT_USER_NAME=$GIT_USER_NAME
 GIT_USER_EMAIL=$GIT_USER_EMAIL
 GITHUB_TOKEN=$GITHUB_TOKEN
-NPM_TOKEN=$NPM_TOKEN"
+NPM_TOKEN=$NPM_TOKEN
+HOST_HOME=$HOME"
     else
         EDITOR_CHOICE=$(gum choose "${EDITOR:-vim}" "vim" "nano")
         USE_EDITOR=true
@@ -145,11 +146,20 @@ install_files() {
             echo "Credentials saved."
         elif [[ "$USE_EDITOR" == "true" ]]; then
             cp "$REPO_DIR/.env.example" "$INSTALL_DIR/.env"
+            # Pre-fill HOST_HOME with the current user's home so plugins resolve correctly.
+            sed -i.bak "s|^HOST_HOME=.*|HOST_HOME=$HOME|" "$INSTALL_DIR/.env" && rm -f "$INSTALL_DIR/.env.bak"
             echo "Opening $INSTALL_DIR/.env in $EDITOR_CHOICE..."
             echo "Save and close when done."
             sleep 1
             "$EDITOR_CHOICE" "$INSTALL_DIR/.env"
         fi
+    fi
+
+    # Backfill HOST_HOME for users upgrading from a previous install that
+    # didn't record it. Safe to run unconditionally.
+    if [[ -f "$INSTALL_DIR/.env" ]] && ! grep -q "^HOST_HOME=" "$INSTALL_DIR/.env"; then
+        echo "" >> "$INSTALL_DIR/.env"
+        echo "HOST_HOME=$HOME" >> "$INSTALL_DIR/.env"
     fi
 
     echo "Files installed to $INSTALL_DIR"
