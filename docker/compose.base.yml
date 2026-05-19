@@ -17,6 +17,7 @@ services:
       - ../config/starship.toml:/root/.config/starship.toml:ro
       - ../config/.gitconfig:/etc/gitconfig:ro
       - ../config/gh-config.yml:/etc/gh/config.yml:ro
+      - ../config/.claude-ailo-style-guide-config.json:/root/.claude-ailo-style-guide-config.json:rw
 
       # Mount Docker socket for container operations
       - /var/run/docker.sock:/var/run/docker.sock
