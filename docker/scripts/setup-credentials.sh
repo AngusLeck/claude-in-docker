@@ -27,4 +27,16 @@ if [ -n "$NPM_TOKEN" ]; then
     npm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"
 fi
 
+# Make host-absolute paths resolve inside the container.
+# Claude records absolute host paths in ~/.claude.json (e.g. plugin installPath
+# like /Users/jane/.claude/plugins/...). Since ~/.claude is bind-mounted at
+# /root/.claude, we symlink the host home to /root so those paths still work.
+if [ -n "$HOST_HOME" ] && [ "$HOST_HOME" != "/root" ]; then
+    if [ ! -e "$HOST_HOME" ]; then
+        echo "✓ Linking host home $HOST_HOME -> /root"
+        mkdir -p "$(dirname "$HOST_HOME")"
+        ln -sfn /root "$HOST_HOME"
+    fi
+fi
+
 echo "Credential setup complete!"

@@ -31,6 +31,7 @@ services:
       - GIT_USER_NAME=${GIT_USER_NAME:-}
       - GIT_USER_EMAIL=${GIT_USER_EMAIL:-}
       - NPM_TOKEN=${NPM_TOKEN:-}
+      - HOST_HOME=${HOST_HOME:-}
       - NODE_ENV=development
       - FORCE_COLOR=true
       - IS_SANDBOX=1
