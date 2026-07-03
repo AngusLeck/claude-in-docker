@@ -79,6 +79,29 @@ claude-docker -g
 - [gum](https://github.com/charmbracelet/gum) for friendly shell prompts
 - Your GitHub and Claude credentials mounted securely
 - Complete isolation from your host system
+- Nix (Determinate) with a persistent shared store, so repos with a `flake.nix` can run their dev shells and validation in-container
+- Headless Chromium for browser testing (puppeteer/playwright against localhost)
+
+### Nix
+
+Nix is installed in the image and `/nix` is backed by a shared named volume (`claude-docker-nix`), so dev shells built in one container are instantly available in every other one. Inside a repo with a `flake.nix`:
+
+```bash
+nix develop -c yarn validate
+```
+
+Private `git+ssh://git@github.com/...` flake inputs work without any SSH keys in the container: ssh GitHub URLs are rewritten to https and authenticated with the `GITHUB_TOKEN` you already provide.
+
+Notes:
+- The nix build sandbox is disabled (`sandbox = false`) — containers can't create the required namespaces; the container itself is the isolation boundary.
+- After a nix version upgrade in the image, refresh the store volume: `docker volume rm claude-docker-nix` (it reseeds from the image).
+- The volume grows over time; run `nix store gc` in a container occasionally to reclaim space.
+
+### Browser Testing
+
+Headless Chromium (installed via Playwright — Chrome for Testing ships no linux/arm64 build) lives at `/usr/local/bin/chromium`. `PUPPETEER_EXECUTABLE_PATH` and `PUPPETEER_SKIP_DOWNLOAD` are preset, so `npm install puppeteer` works out of the box. Claude can start a local server, click around it, and save screenshots into the mounted workspace where you can view them.
+
+Chromium must be launched with `--no-sandbox` (its internal sandbox needs privileges the container deliberately doesn't have — the container is the sandbox).
 
 ### Credentials
 
@@ -118,6 +141,14 @@ claude-docker -g -s        # Shell in global container
 # Run claude in dangerous mode (--dangerously-skip-permissions)
 claude-docker -d
 claude-docker -g -d
+
+# Grant Docker socket access for this session (root-equivalent on the Docker VM)
+claude-docker --docker
+
+# View a server the agent runs on :3000 at http://localhost:3000 (project mode)
+claude-docker -p 3000
+claude-docker -p 3001:3000   # parallel sessions: host 3001 -> container 3000
+claude-docker -p 3000-3010   # small ranges work too
 
 # Pass additional args to claude
 claude-docker --resume
@@ -161,6 +192,11 @@ Project mode includes safety checks to prevent mounting dangerous directories:
 
 - **Blocked**: `/`, `/home`, `/Users`, `/root`, `/etc`, `/var`, `/usr`, etc.
 - **Warning**: Shallow directories (less than 3 levels deep) prompt for confirmation
+
+Access beyond the container boundary is opt-in, per session:
+
+- **Docker socket** (`--docker`): the socket is no longer mounted by default — it is root-equivalent on the Docker VM (a container holding it can mount any host directory shared with Docker, and reach into other Claude containers). Grant it only when the session needs docker, e.g. when Claude works on this project itself. The `docker` CLI and compose/buildx plugins are always in the image; they just have nothing to talk to without the flag.
+- **Port publishing** (`-p`/`--publish`, project mode only): ports bind to `127.0.0.1` only, never the LAN. The long-lived global container publishes nothing. In-container servers must listen on `0.0.0.0` to be visible (e.g. `--host 0.0.0.0` for vite/next dev servers).
 
 ## Configuration
 

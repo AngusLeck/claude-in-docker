@@ -10,8 +10,8 @@ workspace/*
 workspace/repos/*
 
 # Add back in workspace documents
-!workspace/repos/repos_context.md
-!workspace/workspace_context.md
+!workspace/repos/CLAUDE.md
+!workspace/CLAUDE.md
 
 # Config directory (if recreated locally)
 config/

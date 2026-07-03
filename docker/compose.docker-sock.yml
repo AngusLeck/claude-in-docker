@@ -1,0 +1,14 @@
+version: '3.8'
+
+# Opt-in Docker socket access. Enabled with: claude-docker --docker
+#
+# The socket is root-equivalent on the Docker VM: a container holding it can
+# start new containers that mount any host directory shared with Docker
+# (including your home directory), bypassing the credential isolation this
+# project exists to provide. Grant it per-session, consciously - e.g. when
+# Claude is working on claude-in-docker itself.
+
+services:
+  claude:
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock

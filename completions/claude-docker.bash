@@ -6,12 +6,16 @@ _claude_docker() {
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
 
     # All available options
-    local opts="-g --global -s --shell -d --dangerous -w --workspace --update --uninstall --help -h"
+    local opts="-g --global -s --shell -d --dangerous --docker -p --publish -w --workspace --update --uninstall --help -h"
 
     # If previous word was -g/--global, offer mode options
     case "$prev" in
         -g|--global)
-            COMPREPLY=($(compgen -W "-s --shell -d --dangerous" -- "$cur"))
+            COMPREPLY=($(compgen -W "-s --shell -d --dangerous --docker" -- "$cur"))
+            return 0
+            ;;
+        -p|--publish)
+            # Value expected (port spec), nothing sensible to complete
             return 0
             ;;
     esac

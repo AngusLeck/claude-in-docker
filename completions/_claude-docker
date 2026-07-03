@@ -7,6 +7,8 @@ _claude-docker() {
         '(-g --global)'{-g,--global}'[Run in global workspace mode]' \
         '(-s --shell)'{-s,--shell}'[Open bash shell instead of claude]' \
         '(-d --dangerous)'{-d,--dangerous}'[Run claude with --dangerously-skip-permissions]' \
+        '--docker[Mount the Docker socket (root-equivalent on the Docker VM)]' \
+        '*'{-p,--publish}'[Publish a container port on 127.0.0.1 (project mode)]:port spec:' \
         '(-w --workspace)'{-w,--workspace}'[Print global workspace path]' \
         '--update[Update to latest version]' \
         '--uninstall[Remove claude-docker]' \
