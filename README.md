@@ -142,6 +142,14 @@ claude-docker -g -s        # Shell in global container
 claude-docker -d
 claude-docker -g -d
 
+# Grant Docker socket access for this session (root-equivalent on the Docker VM)
+claude-docker --docker
+
+# View a server the agent runs on :3000 at http://localhost:3000 (project mode)
+claude-docker -p 3000
+claude-docker -p 3001:3000   # parallel sessions: host 3001 -> container 3000
+claude-docker -p 3000-3010   # small ranges work too
+
 # Pass additional args to claude
 claude-docker --resume
 
@@ -184,6 +192,11 @@ Project mode includes safety checks to prevent mounting dangerous directories:
 
 - **Blocked**: `/`, `/home`, `/Users`, `/root`, `/etc`, `/var`, `/usr`, etc.
 - **Warning**: Shallow directories (less than 3 levels deep) prompt for confirmation
+
+Access beyond the container boundary is opt-in, per session:
+
+- **Docker socket** (`--docker`): the socket is no longer mounted by default — it is root-equivalent on the Docker VM (a container holding it can mount any host directory shared with Docker, and reach into other Claude containers). Grant it only when the session needs docker, e.g. when Claude works on this project itself. The `docker` CLI and compose/buildx plugins are always in the image; they just have nothing to talk to without the flag.
+- **Port publishing** (`-p`/`--publish`, project mode): ports bind to `127.0.0.1` only, never the LAN. The long-lived global container instead publishes the fixed band `127.0.0.1:3000-3010` when it is created, so servers agents start in that range are always viewable from the host. In-container servers must listen on `0.0.0.0` to be visible (e.g. `--host 0.0.0.0` for vite/next dev servers).
 
 ## Configuration
 

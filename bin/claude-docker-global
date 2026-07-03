@@ -20,6 +20,14 @@ CONTAINER_NAME="claude-docker-global"
 parse_mode_flags "$@"
 set -- "${REMAINING_ARGS[@]}"
 
+# Publishing is per-run and the global container is long-lived; its ports are
+# fixed at creation (see compose.global.yml).
+if [[ ${#PUBLISH_PORTS[@]} -gt 0 ]]; then
+    echo "Error: -p/--publish only applies to project mode."
+    echo "The global container publishes 127.0.0.1:3000-3010 when it is created."
+    exit 1
+fi
+
 # Determine which env file to use
 if [[ -f "$ROOT_DIR/.env" ]]; then
     ENV_FILE="$ROOT_DIR/.env"
@@ -34,11 +42,19 @@ cd "$ROOT_DIR/docker"
 # Detect Claude credentials at runtime
 detect_claude_credentials
 
+COMPOSE_FILES=(-f compose.base.yml -f compose.global.yml)
+if $DOCKER_SOCK_MODE; then
+    COMPOSE_FILES+=(-f compose.docker-sock.yml)
+fi
+
 # Ensure container is running
 if ! container_running; then
     echo "Starting global Claude container..."
-    docker compose -f compose.base.yml -f compose.global.yml --env-file "$ENV_FILE" up -d
+    docker compose "${COMPOSE_FILES[@]}" --env-file "$ENV_FILE" up -d
     sleep 2
+elif $DOCKER_SOCK_MODE; then
+    echo "Note: --docker only takes effect when the global container is created."
+    echo "To apply it: docker rm -f $CONTAINER_NAME && claude-docker -g --docker"
 fi
 
 run_in_container "$@"

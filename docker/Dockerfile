@@ -56,6 +56,18 @@ RUN curl -fsSL https://github.com/cli/cli/releases/download/v2.40.0/gh_2.40.0_li
     && rm -rf /tmp/gh_* \
     && chmod +x /usr/local/bin/gh
 
+# Install Docker CLI + compose/buildx plugins (client only - no daemon in the
+# image; only usable when the socket is granted via `claude-docker --docker`)
+RUN curl -fsSL https://download.docker.com/linux/static/stable/aarch64/docker-27.3.1.tgz | tar -xzC /tmp \
+    && mv /tmp/docker/docker /usr/local/bin/docker \
+    && rm -rf /tmp/docker \
+    && mkdir -p /usr/local/lib/docker/cli-plugins \
+    && curl -fsSL -o /usr/local/lib/docker/cli-plugins/docker-compose \
+        https://github.com/docker/compose/releases/download/v2.32.4/docker-compose-linux-aarch64 \
+    && curl -fsSL -o /usr/local/lib/docker/cli-plugins/docker-buildx \
+        https://github.com/docker/buildx/releases/download/v0.19.3/buildx-v0.19.3.linux-arm64 \
+    && chmod +x /usr/local/lib/docker/cli-plugins/docker-compose /usr/local/lib/docker/cli-plugins/docker-buildx
+
 # Install Yarn globally via npm
 RUN npm install -g yarn
 

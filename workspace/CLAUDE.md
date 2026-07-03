@@ -13,6 +13,9 @@ This workspace `~/workspace` is a shared volume with the host machine, your coll
 You should already have everything you need but if you don't you can install it.
 You are currently logged in to `git` and `gh`.
 
+## Docker
+The `docker` CLI is installed, but the Docker socket is only mounted if your colleague started this session with `--docker`. If `docker ps` fails with a socket error, that access was deliberately not granted — ask for it rather than working around it.
+
 ## Nix
 `nix` is installed and works (flakes enabled). If a repo has a `flake.nix`, run commands through its dev shell rather than relying on globally installed node/yarn versions:
 
@@ -33,6 +36,8 @@ const browser = await puppeteer.launch({ args: ["--no-sandbox", "--disable-dev-s
 ```
 
 Save screenshots inside the workspace so your colleague can view them from the host.
+
+If your colleague wants to view a running app from their own browser, two things must be true: the dev server must listen on `0.0.0.0` (e.g. `--host 0.0.0.0` — vite/next bind localhost by default, which is unreachable from outside the container), and the port must be published. In this global workspace, ports 3000-3010 are always published on the host's localhost; in project mode, only ports granted with `-p` at session start are.
 
 # Limitations
 If you think any tooling or credentials are absent that would be good to always have access to please document it below.

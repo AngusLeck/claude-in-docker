@@ -29,9 +29,6 @@ services:
       # Refresh after a nix upgrade with: docker volume rm claude-docker-nix
       - nix-store:/nix
 
-      # Mount Docker socket for container operations
-      - /var/run/docker.sock:/var/run/docker.sock
-
       # Mount Claude config from host (shared read/write for persistent settings)
       - ${HOME}/.claude.json:/root/.claude.json:rw
       - ${HOME}/.claude:/root/.claude:rw

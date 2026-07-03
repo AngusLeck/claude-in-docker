@@ -79,8 +79,19 @@ else
     CMD="claude"
 fi
 
+# Assemble compose files (opt-in overlays) and per-run publish args
+COMPOSE_FILES=(-f compose.base.yml -f compose.project.yml)
+if $DOCKER_SOCK_MODE; then
+    COMPOSE_FILES+=(-f compose.docker-sock.yml)
+fi
+
+RUN_ARGS=()
+for port_spec in ${PUBLISH_PORTS[@]+"${PUBLISH_PORTS[@]}"}; do
+    RUN_ARGS+=(--publish "$(publish_value "$port_spec")")
+done
+
 # Run container - it will be removed when you exit
 cd "$ROOT_DIR/docker"
-exec docker compose -f compose.base.yml -f compose.project.yml \
+exec docker compose "${COMPOSE_FILES[@]}" \
     --env-file "$ENV_FILE" \
-    run --rm claude $CMD "$@"
+    run --rm ${RUN_ARGS[@]+"${RUN_ARGS[@]}"} claude $CMD "$@"
