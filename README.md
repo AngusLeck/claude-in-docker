@@ -79,6 +79,29 @@ claude-docker -g
 - [gum](https://github.com/charmbracelet/gum) for friendly shell prompts
 - Your GitHub and Claude credentials mounted securely
 - Complete isolation from your host system
+- Nix (Determinate) with a persistent shared store, so repos with a `flake.nix` can run their dev shells and validation in-container
+- Headless Chromium for browser testing (puppeteer/playwright against localhost)
+
+### Nix
+
+Nix is installed in the image and `/nix` is backed by a shared named volume (`claude-docker-nix`), so dev shells built in one container are instantly available in every other one. Inside a repo with a `flake.nix`:
+
+```bash
+nix develop -c yarn validate
+```
+
+Private `git+ssh://git@github.com/...` flake inputs work without any SSH keys in the container: ssh GitHub URLs are rewritten to https and authenticated with the `GITHUB_TOKEN` you already provide.
+
+Notes:
+- The nix build sandbox is disabled (`sandbox = false`) — containers can't create the required namespaces; the container itself is the isolation boundary.
+- After a nix version upgrade in the image, refresh the store volume: `docker volume rm claude-docker-nix` (it reseeds from the image).
+- The volume grows over time; run `nix store gc` in a container occasionally to reclaim space.
+
+### Browser Testing
+
+Headless Chromium (installed via Playwright — Chrome for Testing ships no linux/arm64 build) lives at `/usr/local/bin/chromium`. `PUPPETEER_EXECUTABLE_PATH` and `PUPPETEER_SKIP_DOWNLOAD` are preset, so `npm install puppeteer` works out of the box. Claude can start a local server, click around it, and save screenshots into the mounted workspace where you can view them.
+
+Chromium must be launched with `--no-sandbox` (its internal sandbox needs privileges the container deliberately doesn't have — the container is the sandbox).
 
 ### Credentials
 

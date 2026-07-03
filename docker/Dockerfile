@@ -64,6 +64,29 @@ RUN npm install -g yarn
 RUN curl -fsSL https://claude.ai/install.sh | bash
 ENV PATH="/root/.local/bin:${PATH}"
 
+# Install Determinate Nix (same distribution as the host).
+# --init none: no init system in the container, nix runs daemonless as root.
+# sandbox = false: the build sandbox needs namespace privileges containers don't have;
+# the container itself is the isolation boundary here.
+# The /nix built into the image seeds the shared claude-docker-nix volume on first use,
+# after which all containers share one persistent store (see compose.base.yml).
+RUN curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix \
+    | sh -s -- install linux --init none --no-confirm --extra-conf "sandbox = false"
+ENV PATH="/nix/var/nix/profiles/default/bin:${PATH}"
+
+# Install Chromium via Playwright (Chrome for Testing has no linux/arm64 build,
+# and Ubuntu's apt chromium is a snap stub). --with-deps installs the shared libraries.
+# The env vars make `npm install puppeteer` skip its own (unavailable) download and
+# point puppeteer at this binary. Note: Chrome's internal sandbox can't run in an
+# unprivileged container, so launch with --no-sandbox; the container is the boundary.
+RUN apt-get update \
+    && npx -y playwright install --with-deps chromium \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -s /root/.cache/ms-playwright/chromium-*/chrome-linux/chrome /usr/local/bin/chromium
+ENV PUPPETEER_SKIP_DOWNLOAD=true \
+    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/local/bin/chromium
+
 # Setup workspace directory (Claude config mounted from host)
 RUN mkdir -p /workspace/repos
 

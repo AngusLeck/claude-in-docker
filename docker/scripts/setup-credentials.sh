@@ -8,6 +8,13 @@ if [ -n "$GITHUB_TOKEN" ]; then
     echo "✓ Configuring GitHub authentication"
     git config --global credential.helper store
     echo "https://token:$GITHUB_TOKEN@github.com" > /root/.git-credentials
+
+    # Rewrite ssh github URLs to https so the token authenticates them.
+    # There are no SSH keys in the container; this lets nix fetch private
+    # flake inputs (e.g. git+ssh://git@github.com/ailohq/ailo-nix-lib) and
+    # git clone ssh-style URLs using the token instead.
+    git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+    git config --global --add url."https://github.com/".insteadOf "git@github.com:"
 fi
 
 # Configure Git user from environment variables

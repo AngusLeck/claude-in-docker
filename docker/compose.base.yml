@@ -19,6 +19,16 @@ services:
       - ../config/gh-config.yml:/etc/gh/config.yml:ro
       - ../config/.claude-ailo-style-guide-config.json:/root/.claude-ailo-style-guide-config.json:rw
 
+      # Mount workspace context so Claude auto-loads it in both modes
+      # (in global mode the ../workspace mount provides the same files)
+      - ../workspace/CLAUDE.md:/workspace/CLAUDE.md:ro
+      - ../workspace/repos/CLAUDE.md:/workspace/repos/CLAUDE.md:ro
+
+      # Shared persistent nix store: seeded from the image's /nix on first use,
+      # then shared across all claude-docker containers so builds are cached once.
+      # Refresh after a nix upgrade with: docker volume rm claude-docker-nix
+      - nix-store:/nix
+
       # Mount Docker socket for container operations
       - /var/run/docker.sock:/var/run/docker.sock
 
@@ -39,3 +49,7 @@ services:
 
     stdin_open: true
     tty: true
+
+volumes:
+  nix-store:
+    name: claude-docker-nix
