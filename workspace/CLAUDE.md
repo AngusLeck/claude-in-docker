@@ -26,8 +26,6 @@ nix develop -c yarn validate
 
 Private flake inputs (e.g. `git+ssh://git@github.com/ailohq/...`) work — ssh github URLs are rewritten to https and authenticated with the GitHub token. The nix store is a shared volume, so the first build of a dev shell is slow but subsequent uses (including in other containers) are fast.
 
-Note: fetching private `@ailo/*` npm packages goes via `npm-cache.dev.ailo.io`, which is only reachable when the host's VPN is up. If those fetches fail, tell your colleague to check the VPN rather than debugging further.
-
 ## Browser testing
 Headless Chromium is installed at `/usr/local/bin/chromium` (also via `$PUPPETEER_EXECUTABLE_PATH`, so `npm install puppeteer` works without downloading anything). You can start a local server, drive it in the browser, click around, and take screenshots. Launch with `--no-sandbox`, e.g.:
 
