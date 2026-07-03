@@ -37,7 +37,7 @@ const browser = await puppeteer.launch({ args: ["--no-sandbox", "--disable-dev-s
 
 Save screenshots inside the workspace so your colleague can view them from the host.
 
-If your colleague wants to view a running app from their own browser, two things must be true: the dev server must listen on `0.0.0.0` (e.g. `--host 0.0.0.0` — vite/next bind localhost by default, which is unreachable from outside the container), and the port must be published. In this global workspace, ports 3000-3010 are always published on the host's localhost; in project mode, only ports granted with `-p` at session start are.
+If your colleague wants to view a running app from their own browser, two things must be true: the dev server must listen on `0.0.0.0` (e.g. `--host 0.0.0.0` — vite/next bind localhost by default, which is unreachable from outside the container), and the port must have been published when the session started (project mode `-p <port>`). If no port was published, screenshots are the way to share what you see — or suggest they restart the session with `-p`.
 
 # Limitations
 If you think any tooling or credentials are absent that would be good to always have access to please document it below.

@@ -20,11 +20,12 @@ CONTAINER_NAME="claude-docker-global"
 parse_mode_flags "$@"
 set -- "${REMAINING_ARGS[@]}"
 
-# Publishing is per-run and the global container is long-lived; its ports are
-# fixed at creation (see compose.global.yml).
+# Publishing is per-run but the global container is long-lived: a running
+# container can't gain ports, so -p doesn't fit this mode.
 if [[ ${#PUBLISH_PORTS[@]} -gt 0 ]]; then
     echo "Error: -p/--publish only applies to project mode."
-    echo "The global container publishes 127.0.0.1:3000-3010 when it is created."
+    echo "The global container has no published ports; use a project-mode session"
+    echo "(cd into the repo and run: claude-docker -p <port>) to view an app from the host."
     exit 1
 fi
 

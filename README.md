@@ -196,7 +196,7 @@ Project mode includes safety checks to prevent mounting dangerous directories:
 Access beyond the container boundary is opt-in, per session:
 
 - **Docker socket** (`--docker`): the socket is no longer mounted by default — it is root-equivalent on the Docker VM (a container holding it can mount any host directory shared with Docker, and reach into other Claude containers). Grant it only when the session needs docker, e.g. when Claude works on this project itself. The `docker` CLI and compose/buildx plugins are always in the image; they just have nothing to talk to without the flag.
-- **Port publishing** (`-p`/`--publish`, project mode): ports bind to `127.0.0.1` only, never the LAN. The long-lived global container instead publishes the fixed band `127.0.0.1:3000-3010` when it is created, so servers agents start in that range are always viewable from the host. In-container servers must listen on `0.0.0.0` to be visible (e.g. `--host 0.0.0.0` for vite/next dev servers).
+- **Port publishing** (`-p`/`--publish`, project mode only): ports bind to `127.0.0.1` only, never the LAN. The long-lived global container publishes nothing. In-container servers must listen on `0.0.0.0` to be visible (e.g. `--host 0.0.0.0` for vite/next dev servers).
 
 ## Configuration
 

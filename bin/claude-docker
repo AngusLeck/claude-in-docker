@@ -48,7 +48,6 @@ case "$1" in
         echo "  -p, --publish PORT[:PORT]"
         echo "                 Publish a container port on 127.0.0.1 (project mode"
         echo "                 only, repeatable). Small ranges work too: -p 3000-3010."
-        echo "                 The global container always publishes 127.0.0.1:3000-3010."
         echo
         echo "Management:"
         echo "  --update       Update to latest version"
