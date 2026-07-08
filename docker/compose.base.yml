@@ -29,6 +29,11 @@ services:
       # Refresh after a nix upgrade with: docker volume rm claude-docker-nix
       - nix-store:/nix
 
+      # Shared persistent nix flake cache (downloaded flake inputs + evaluation
+      # cache). Without it, every fresh container re-downloads nixpkgs and
+      # re-evaluates flakes from scratch even when the /nix store is warm.
+      - nix-cache:/root/.cache/nix
+
       # Mount Claude config from host (shared read/write for persistent settings)
       - ${HOME}/.claude.json:/root/.claude.json:rw
       - ${HOME}/.claude:/root/.claude:rw
@@ -50,3 +55,5 @@ services:
 volumes:
   nix-store:
     name: claude-docker-nix
+  nix-cache:
+    name: claude-docker-nix-cache
