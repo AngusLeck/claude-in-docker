@@ -49,6 +49,13 @@ services:
       - FORCE_COLOR=true
       - IS_SANDBOX=1
 
+    # Cap each container so a runaway build or test run is OOM-killed inside its
+    # own cgroup instead of pushing the whole Docker VM into swap. Setting the
+    # swap limit equal to the memory limit disables swap for the container.
+    # Override per install with CLAUDE_DOCKER_MEMORY_LIMIT in .env (e.g. 16g).
+    mem_limit: ${CLAUDE_DOCKER_MEMORY_LIMIT:-12g}
+    memswap_limit: ${CLAUDE_DOCKER_MEMORY_LIMIT:-12g}
+
     # Run tini as PID 1 so orphaned processes (background dev servers, killed
     # subagent shells, MCP servers) are reaped instead of piling up as zombies
     # over long sessions, and so SIGTERM on stop reaches the real process.
