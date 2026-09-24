@@ -8,6 +8,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        CLAUDE_CODE_VERSION: ${CLAUDE_CODE_VERSION:-latest}
     container_name: claude-docker-global
 
     volumes:

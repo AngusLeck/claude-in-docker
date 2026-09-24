@@ -19,7 +19,8 @@ case "$1" in
         exec "$SCRIPT_DIR/claude-docker-uninstall"
         ;;
     --update)
-        exec "$SCRIPT_DIR/claude-docker-update"
+        shift
+        exec "$SCRIPT_DIR/claude-docker-update" "$@"
         ;;
     --workspace|-w)
         echo "$ROOT_DIR/workspace"
@@ -50,7 +51,9 @@ case "$1" in
         echo "                 only, repeatable). Small ranges work too: -p 3000-3010."
         echo
         echo "Management:"
-        echo "  --update       Update to latest version"
+        echo "  --update [--no-cache] [branch]"
+        echo "                 Update claude-docker and the Claude Code version in the"
+        echo "                 image (--no-cache forces a full image rebuild)"
         echo "  --uninstall    Remove claude-docker"
         echo "  -w, --workspace Print global workspace path"
         echo

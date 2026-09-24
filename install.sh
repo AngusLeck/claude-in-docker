@@ -46,4 +46,9 @@ echo "-------------------------"
 install_completions
 echo
 
+echo "Step 7: Refreshing global container"
+echo "-----------------------------------"
+refresh_global_container
+echo
+
 show_success

@@ -18,6 +18,10 @@ _claude_docker() {
             # Value expected (port spec), nothing sensible to complete
             return 0
             ;;
+        --update)
+            COMPREPLY=($(compgen -W "--no-cache" -- "$cur"))
+            return 0
+            ;;
     esac
 
     # Default: suggest all options

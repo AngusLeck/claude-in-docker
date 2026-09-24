@@ -158,8 +158,9 @@ claude-docker -w                    # Prints path
 cd $(claude-docker -w)              # Navigate to workspace
 cursor $(claude-docker -w)          # Open in IDE
 
-# Update to latest version
+# Update claude-docker and the Claude Code version in the image
 claude-docker --update
+claude-docker --update --no-cache   # also refresh every base layer (apt, node, nix...)
 
 # Uninstall
 claude-docker --uninstall
@@ -186,6 +187,35 @@ yarn restart
 yarn build
 ```
 
+## Updating
+
+```bash
+claude-docker --update
+```
+
+This fetches the latest claude-in-docker, looks up the current Claude Code release, and rebuilds the image. The Claude Code install is the last layer of the image and is keyed on that version, so a routine update rebuilds only that layer; the apt, node, nix and chromium layers are reused from the cache. Pass `--no-cache` when you want those refreshed too.
+
+Project-mode containers are created per run, so they use the new image the next time you start one. The global container is long-lived, so the update offers to recreate it (this ends any session attached to it). If you decline, do it later with `docker rm -f claude-docker-global && claude-docker -g`.
+
+Claude Code's own auto-updater is not relied on inside containers: the install lives in the image layer, so anything it downloaded would vanish when a project container exits.
+
+## Stability on macOS (Docker Desktop)
+
+Symptom seen with several long-running sessions in parallel: a container stops responding, `docker stop`/`docker kill` hang, and only restarting Docker Desktop recovers. Both usual causes leave container processes stuck inside the kernel (uninterruptible I/O, or memory reclaim), which is why `kill` cannot help and only restarting the VM does.
+
+1. **File sharing backend.** Every bind mount (`~/.claude`, `~/.claude.json`, the project directory) goes through Docker Desktop's file-sharing daemon. If `mount | grep grpcfuse` inside a container shows `fuse.grpcfuse`, you are on the older gRPC FUSE backend; switch to **VirtioFS** in Docker Desktop → Settings → General → "Choose file sharing implementation". VirtioFS needs the Virtual Machine Manager to be **Docker VMM** (Docker's own hypervisor for Apple Silicon) or Apple Virtualization framework, not QEMU. gRPC FUSE is known to stall under sustained concurrent writes from multiple containers, and `~/.claude` is written constantly by every session (transcripts, file history, debug logs).
+2. **VM memory.** Docker Desktop gives the Linux VM a fixed memory budget (Settings → Resources). If containers can use all of it, one heavy `nix develop`, `yarn install`, or test run can push the whole VM into swap, and once it thrashes `dockerd` stalls too. Each container is therefore capped (default 12g, swap disabled for the container) so the kernel kills the runaway process inside that one container instead. Set `CLAUDE_DOCKER_MEMORY_LIMIT` in `~/.claude-in-docker/.env` to change it; size it so the number of containers you typically run at once fits inside the VM budget with headroom for the VM itself. If a legitimate job is killed, you will see the container exit rather than a hang; raise the cap for that project or the VM budget.
+3. **Process reaping.** Containers run with `init: true`, so orphaned processes from killed subagent shells and background servers are reaped rather than accumulating as zombies for the life of a session.
+
+To tell the two causes apart, look at the VM logs after a hang. They survive the restart:
+
+```bash
+ls -t ~/Library/Containers/com.docker.docker/Data/log/vm/ | head
+grep -iE 'oom|out of memory|hung task|fuse' ~/Library/Containers/com.docker.docker/Data/log/vm/*.log | tail -50
+```
+
+`oom-kill` / `Out of memory` points at memory; `hung task` traces naming node, claude or git, or fuse errors, point at the file-sharing backend. Docker Desktop's Troubleshoot → "Get diagnostics" bundles the same logs. While things are still healthy under load, `docker stats` on the host shows which container is consuming the memory budget.
+
 ## Safety Features
 
 Project mode includes safety checks to prevent mounting dangerous directories:
@@ -199,6 +229,10 @@ Access beyond the container boundary is opt-in, per session:
 - **Port publishing** (`-p`/`--publish`, project mode only): ports bind to `127.0.0.1` only, never the LAN. The long-lived global container publishes nothing. In-container servers must listen on `0.0.0.0` to be visible (e.g. `--host 0.0.0.0` for vite/next dev servers).
 
 ## Configuration
+
+Runtime settings live in `~/.claude-in-docker/.env` (or `.env` in the repo when running from it). Besides credentials it takes:
+
+- `CLAUDE_DOCKER_MEMORY_LIMIT` - per-container memory cap, default `12g`. See "Stability on macOS" below.
 
 The container mounts several configuration files:
 
