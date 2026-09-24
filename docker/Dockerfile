@@ -71,11 +71,6 @@ RUN curl -fsSL https://download.docker.com/linux/static/stable/aarch64/docker-27
 # Install Yarn globally via npm
 RUN npm install -g yarn
 
-# Install Claude CLI via the native installer (puts binary at ~/.local/bin/claude,
-# which is the location `claude /doctor` checks)
-RUN curl -fsSL https://claude.ai/install.sh | bash
-ENV PATH="/root/.local/bin:${PATH}"
-
 # Install Determinate Nix (same distribution as the host).
 # --init none: no init system in the container, nix runs daemonless as root.
 # sandbox = false: the build sandbox needs namespace privileges containers don't have;
@@ -98,6 +93,15 @@ RUN apt-get update \
 ENV PUPPETEER_SKIP_DOWNLOAD=true \
     PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/local/bin/chromium
+
+# Install Claude CLI via the native installer (puts binary at ~/.local/bin/claude,
+# which is the location `claude /doctor` checks).
+# Kept as the last heavy layer, keyed on an explicit version: the installer
+# resolves the version on the host (see lib/installer.sh) and passes it in, so a
+# new Claude Code release rebuilds only this layer and everything above stays cached.
+ARG CLAUDE_CODE_VERSION=latest
+RUN curl -fsSL https://claude.ai/install.sh | bash -s -- "$CLAUDE_CODE_VERSION"
+ENV PATH="/root/.local/bin:${PATH}"
 
 # Setup workspace directory (Claude config mounted from host)
 RUN mkdir -p /workspace/repos

@@ -1,11 +1,36 @@
 #!/bin/bash
-# claude-docker-update - Update claude-docker to latest version
+# claude-docker-update - Update claude-docker and the Claude Code version in its image
+#
+# Usage: claude-docker --update [--no-cache] [branch]
+#
+# Fetches the latest claude-in-docker, rebuilds the image with the latest Claude
+# Code release (only the Claude Code layer rebuilds unless --no-cache is given),
+# reinstalls the scripts, and offers to recreate the global container so it
+# picks up the new image.
 set -e
 
 INSTALL_DIR="$HOME/.claude-in-docker"
 REPO_URL="https://github.com/AngusLeck/claude-in-docker.git"
-BRANCH="${1:-master}"  # Allow specifying branch, default to main
+BRANCH="master"
 TEMP_DIR="/tmp/claude-docker-update-$$"
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --no-cache)
+            export CLAUDE_DOCKER_BUILD_NO_CACHE=1
+            shift
+            ;;
+        -*)
+            echo "Error: unknown option '$1'" >&2
+            echo "Usage: claude-docker --update [--no-cache] [branch]" >&2
+            exit 1
+            ;;
+        *)
+            BRANCH="$1"
+            shift
+            ;;
+    esac
+done
 
 echo "================================"
 echo "  Claude-in-Docker Update"
@@ -32,13 +57,8 @@ if ! git clone --depth 1 --branch "$BRANCH" "$REPO_URL" "$TEMP_DIR"; then
 fi
 echo
 
-# Backup credentials
-if [[ -f "$INSTALL_DIR/.env" ]]; then
-    echo "Preserving credentials..."
-    cp "$INSTALL_DIR/.env" "$TEMP_DIR/.env"
-fi
-
-# Run install script
+# Run install script (it reads credentials from $INSTALL_DIR/.env and keeps
+# them unless you choose to overwrite)
 echo "Running installer..."
 echo
 cd "$TEMP_DIR"

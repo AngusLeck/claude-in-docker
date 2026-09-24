@@ -121,10 +121,73 @@ choose_install_location() {
     fi
 }
 
+# Same source the native installer reads, so the version we build is exactly
+# the one `curl https://claude.ai/install.sh | bash` would install right now.
+CLAUDE_CODE_RELEASES_URL="https://downloads.claude.ai/claude-code-releases"
+
+resolve_latest_claude_code_version() {
+    local version
+    version=$(curl -fsSL "$CLAUDE_CODE_RELEASES_URL/latest" 2>/dev/null | tr -d '[:space:]')
+    if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+        echo "Error: could not determine the latest Claude Code version from $CLAUDE_CODE_RELEASES_URL/latest" >&2
+        echo "Check your network connection and try again." >&2
+        return 1
+    fi
+    echo "$version"
+}
+
+# Builds with the layer cache: everything above the Claude Code layer (apt, node,
+# nix, chromium) is reused, and the Claude Code layer is keyed on the resolved
+# version so it rebuilds only when a new release exists.
+# Set CLAUDE_DOCKER_BUILD_NO_CACHE=1 to force a full rebuild of every layer.
 build_docker_image() {
+    CLAUDE_CODE_VERSION=$(resolve_latest_claude_code_version) || return 1
+    export CLAUDE_CODE_VERSION
+    echo "Claude Code version: $CLAUDE_CODE_VERSION"
+
+    local build_args=()
+    if [[ "${CLAUDE_DOCKER_BUILD_NO_CACHE:-}" == "1" ]]; then
+        echo "Full rebuild requested (no layer cache)."
+        build_args+=(--no-cache)
+    fi
+
     cd "$REPO_DIR/docker"
-    docker compose -f compose.base.yml -f compose.global.yml build --no-cache
+    docker compose -f compose.base.yml -f compose.global.yml build ${build_args[@]+"${build_args[@]}"}
     echo "Done."
+}
+
+# The global container is long-lived (restart: unless-stopped), so a rebuilt
+# image does nothing for it until it is recreated. Project containers are
+# `run --rm` and pick up the new image on their next start automatically.
+refresh_global_container() {
+    local container_name="claude-docker-global"
+    if ! docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
+        echo "No global container to refresh."
+        return 0
+    fi
+
+    local current_image latest_image
+    current_image=$(docker inspect --format '{{.Image}}' "$container_name" 2>/dev/null || echo "")
+    latest_image=$(docker image inspect --format '{{.Id}}' claude-dev-ubuntu:latest 2>/dev/null || echo "")
+    if [[ -n "$current_image" && "$current_image" == "$latest_image" ]]; then
+        echo "Global container already runs the current image."
+        return 0
+    fi
+
+    echo "The global container ($container_name) is running an older image."
+    if ! gum confirm "Recreate it now? Any claude session attached to it will be terminated."; then
+        echo "Skipped. Recreate later with: docker rm -f $container_name && claude-docker -g"
+        return 0
+    fi
+
+    local compose_files=(-f compose.base.yml -f compose.global.yml)
+    if docker inspect --format '{{range .Mounts}}{{.Source}}{{"\n"}}{{end}}' "$container_name" | grep -q "docker.sock"; then
+        compose_files+=(-f compose.docker-sock.yml)
+    fi
+
+    cd "$INSTALL_DIR/docker"
+    docker compose "${compose_files[@]}" --env-file "$INSTALL_DIR/.env" up -d --force-recreate
+    echo "Global container recreated."
 }
 
 install_files() {

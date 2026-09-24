@@ -49,6 +49,11 @@ services:
       - FORCE_COLOR=true
       - IS_SANDBOX=1
 
+    # Run tini as PID 1 so orphaned processes (background dev servers, killed
+    # subagent shells, MCP servers) are reaped instead of piling up as zombies
+    # over long sessions, and so SIGTERM on stop reaches the real process.
+    init: true
+
     stdin_open: true
     tty: true
 

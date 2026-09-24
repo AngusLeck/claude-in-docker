@@ -10,7 +10,8 @@ _claude-docker() {
         '--docker[Mount the Docker socket (root-equivalent on the Docker VM)]' \
         '*'{-p,--publish}'[Publish a container port on 127.0.0.1 (project mode)]:port spec:' \
         '(-w --workspace)'{-w,--workspace}'[Print global workspace path]' \
-        '--update[Update to latest version]' \
+        '--update[Update claude-docker and Claude Code in the image]' \
+        '--no-cache[With --update: force a full image rebuild]' \
         '--uninstall[Remove claude-docker]' \
         '(-h --help)'{-h,--help}'[Show help message]' \
         '*:claude args:_default'
