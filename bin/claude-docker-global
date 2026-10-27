@@ -14,6 +14,7 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 source "$ROOT_DIR/lib/flags.sh"
 source "$ROOT_DIR/lib/container.sh"
 source "$ROOT_DIR/lib/credentials.sh"
+source "$ROOT_DIR/lib/oauth-relay.sh"
 
 CONTAINER_NAME="claude-docker-global"
 
@@ -57,5 +58,7 @@ elif $DOCKER_SOCK_MODE; then
     echo "Note: --docker only takes effect when the global container is created."
     echo "To apply it: docker rm -f $CONTAINER_NAME && claude-docker -g --docker"
 fi
+
+start_oauth_relay
 
 run_in_container "$@"

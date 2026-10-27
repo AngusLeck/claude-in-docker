@@ -114,6 +114,23 @@ The container uses:
 
 After running `install.sh`, credentials are stored in `~/.claude-in-docker/.env`.
 
+### MCP Sign-In (OAuth)
+
+HTTP MCP servers that sign you in through the browser (e.g. via Okta) redirect back to `http://localhost:<port>/callback`, where Claude Code is waiting. Inside a container that listener is on the container's own localhost, so the redirect from your browser lands nowhere.
+
+To make it work, pin the callback port on the MCP server once:
+
+```bash
+claude mcp remove <name> -s user
+claude mcp add -s user --transport http --callback-port 8765 <name> <url>
+```
+
+`~/.claude.json` is shared with the containers, so this is the only place the port lives. When `claude-docker` starts, it launches a small relay (`lib/oauth-relay.py`) on the host that listens on `127.0.0.1` for every pinned callback port. When your browser hits the callback, the relay replays it inside the running claude-docker containers with `docker exec ... curl`; the container whose Claude is waiting on that port receives it. No container ports are published.
+
+- One relay serves every session; it exits once no claude-docker containers are running. It logs to `$TMPDIR/claude-docker-oauth-relay.log`.
+- Tokens land in the shared `~/.claude/.credentials.json`, so after signing in from one session, reconnect the server from `/mcp` in the others instead of signing in again. Avoid signing in from two sessions at once: the callback goes to whichever container answers first.
+- Needs `python3` on the host; without it the relay is skipped.
+
 ### IDE and Development Tool Access
 
 Since your project directory is mounted as a volume, you can:
@@ -226,6 +243,7 @@ Project mode includes safety checks to prevent mounting dangerous directories:
 Access beyond the container boundary is opt-in, per session:
 
 - **Docker socket** (`--docker`): the socket is no longer mounted by default — it is root-equivalent on the Docker VM (a container holding it can mount any host directory shared with Docker, and reach into other Claude containers). Grant it only when the session needs docker, e.g. when Claude works on this project itself. The `docker` CLI and compose/buildx plugins are always in the image; they just have nothing to talk to without the flag.
+- **MCP OAuth relay**: listens on `127.0.0.1` only, for ports pinned with `--callback-port`, and forwards nothing but `GET /callback` requests into containers.
 - **Port publishing** (`-p`/`--publish`, project mode only): ports bind to `127.0.0.1` only, never the LAN. The long-lived global container publishes nothing. In-container servers must listen on `0.0.0.0` to be visible (e.g. `--host 0.0.0.0` for vite/next dev servers).
 
 ## Configuration

@@ -14,6 +14,7 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
 source "$ROOT_DIR/lib/flags.sh"
 source "$ROOT_DIR/lib/credentials.sh"
+source "$ROOT_DIR/lib/oauth-relay.sh"
 
 PROJECT_DIR="$(pwd)"
 PROJECT_NAME="$(basename "$PROJECT_DIR")"
@@ -89,6 +90,8 @@ RUN_ARGS=()
 for port_spec in ${PUBLISH_PORTS[@]+"${PUBLISH_PORTS[@]}"}; do
     RUN_ARGS+=(--publish "$(publish_value "$port_spec")")
 done
+
+start_oauth_relay
 
 # Run container - it will be removed when you exit
 cd "$ROOT_DIR/docker"
