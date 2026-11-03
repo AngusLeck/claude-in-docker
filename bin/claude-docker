@@ -31,6 +31,16 @@ case "$1" in
         source "$ROOT_DIR/lib/sessions.sh"
         attach_session "${2:-}"
         ;;
+    --pick)
+        source "$ROOT_DIR/lib/sessions.sh"
+        pick_session
+        exit 0
+        ;;
+    --prune)
+        source "$ROOT_DIR/lib/sessions.sh"
+        prune_sessions "${2:-}"
+        exit 0
+        ;;
     --workspace|-w)
         echo "$ROOT_DIR/workspace"
         exit 0
@@ -60,7 +70,16 @@ case "$1" in
         echo "                 only, repeatable). Small ranges work too: -p 3000-3010."
         echo
         echo "Sessions:"
-        echo "  --ls           List running claude-docker containers"
+        echo "  --ls           List running sessions: attached (its terminal is open),"
+        echo "                 detached (terminal closed, still running) or legacy"
+        echo "                 (started before client tracking), and what Claude is"
+        echo "                 doing (waiting for you first, then working, idle)"
+        echo "  --pick         Choose a session with fzf: focuses an attached session's"
+        echo "                 iTerm tab, attaches a detached one here, and resumes"
+        echo "                 one that ended in the last 7 days"
+        echo "  --prune [--yes]"
+        echo "                 Stop detached (and unconfirmable legacy) sessions after"
+        echo "                 asking; --yes skips the question"
         echo "  --attach <name|project>"
         echo "                 Reattach this terminal to a running project session."
         echo "                 Detach with Ctrl-Q Ctrl-Q; the session keeps running."
@@ -87,6 +106,8 @@ case "$1" in
         echo "  claude-docker -p 3001:3000 Same, on host port 3001 (parallel sessions)"
         echo "  claude-docker --ls         See which sessions are running"
         echo "  claude-docker --attach my-app  Rejoin the session for ./my-app"
+        echo "  claude-docker --pick       Jump to the session that needs you"
+        echo "  claude-docker --prune      Clean up sessions left behind by closed tabs"
         echo "  cd \$(claude-docker -w)     Navigate to global workspace"
         echo "  cursor \$(claude-docker -w) Open workspace in IDE"
         exit 0
