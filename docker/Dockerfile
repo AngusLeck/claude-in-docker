@@ -51,8 +51,9 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | b
 ENV PATH=$NVM_DIR/default:$PATH
 
 # Install GitHub CLI (using direct download for ARM64)
-RUN curl -fsSL https://github.com/cli/cli/releases/download/v2.40.0/gh_2.40.0_linux_arm64.tar.gz | tar -xzC /tmp \
-    && cp /tmp/gh_2.40.0_linux_arm64/bin/gh /usr/local/bin/ \
+ARG GH_VERSION=2.102.1
+RUN curl -fsSL https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_arm64.tar.gz | tar -xzC /tmp \
+    && cp /tmp/gh_${GH_VERSION}_linux_arm64/bin/gh /usr/local/bin/ \
     && rm -rf /tmp/gh_* \
     && chmod +x /usr/local/bin/gh
 
@@ -102,6 +103,11 @@ ENV PUPPETEER_SKIP_DOWNLOAD=true \
 ARG CLAUDE_CODE_VERSION=latest
 RUN curl -fsSL https://claude.ai/install.sh | bash -s -- "$CLAUDE_CODE_VERSION"
 ENV PATH="/root/.local/bin:${PATH}"
+
+# Container-only memory for Claude, at Claude Code's Linux managed-policy path
+# (loaded in every session alongside the host-shared ~/.claude/CLAUDE.md).
+# Copied after the Claude Code layer so editing it doesn't rebuild that layer.
+COPY etc/claude-code/CLAUDE.md /etc/claude-code/CLAUDE.md
 
 # Setup workspace directory (Claude config mounted from host)
 RUN mkdir -p /workspace/repos

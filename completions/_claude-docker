@@ -9,6 +9,8 @@ _claude-docker() {
         '(-d --dangerous)'{-d,--dangerous}'[Run claude with --dangerously-skip-permissions]' \
         '--docker[Mount the Docker socket (root-equivalent on the Docker VM)]' \
         '*'{-p,--publish}'[Publish a container port on 127.0.0.1 (project mode)]:port spec:' \
+        '--ls[List running claude-docker containers]' \
+        '--attach[Reattach to a running project session]:name or project:' \
         '(-w --workspace)'{-w,--workspace}'[Print global workspace path]' \
         '--update[Update claude-docker and Claude Code in the image]' \
         '--no-cache[With --update: force a full image rebuild]' \

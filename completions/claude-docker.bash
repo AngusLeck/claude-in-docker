@@ -6,7 +6,7 @@ _claude_docker() {
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
 
     # All available options
-    local opts="-g --global -s --shell -d --dangerous --docker -p --publish -w --workspace --update --uninstall --help -h"
+    local opts="-g --global -s --shell -d --dangerous --docker -p --publish --ls --attach -w --workspace --update --uninstall --help -h"
 
     # If previous word was -g/--global, offer mode options
     case "$prev" in
@@ -16,6 +16,12 @@ _claude_docker() {
             ;;
         -p|--publish)
             # Value expected (port spec), nothing sensible to complete
+            return 0
+            ;;
+        --attach)
+            local sessions
+            sessions=$(docker ps --filter label=cid.project --format '{{.Names}} {{.Label "cid.project"}}' 2>/dev/null)
+            COMPREPLY=($(compgen -W "$sessions" -- "$cur"))
             return 0
             ;;
         --update)

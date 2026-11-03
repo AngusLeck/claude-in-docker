@@ -48,6 +48,9 @@ services:
       - NODE_ENV=development
       - FORCE_COLOR=true
       - IS_SANDBOX=1
+      # Claude Code comes from the image (see Dockerfile); an in-container
+      # self-update would vanish with the container, so don't attempt one.
+      - DISABLE_AUTOUPDATER=1
 
     # Cap each container so a runaway build or test run is OOM-killed inside its
     # own cgroup instead of pushing the whole Docker VM into swap. Setting the
