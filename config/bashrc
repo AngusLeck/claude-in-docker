@@ -26,6 +26,9 @@ repo() {
 }
 
 
-# Welcome message
-echo "🔧 Claude environment ready"
-echo "🤖 Run 'claude' to start a conversation with Claude"
+# Welcome message, only for a person at an interactive terminal: Claude's Bash tool
+# starts a shell per command, and the banner would prefix every command's output.
+if [[ $- == *i* && -t 1 && -z "$CLAUDECODE" ]]; then
+    echo "🔧 Claude environment ready"
+    echo "🤖 Run 'claude' to start a conversation with Claude"
+fi
