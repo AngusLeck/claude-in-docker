@@ -103,9 +103,17 @@ if $DOCKER_SOCK_MODE; then
     COMPOSE_FILES+=(-f compose.docker-sock.yml)
 fi
 
-# Named and labelled so sessions can be found with --ls and rejoined with --attach
+# Named and labelled so sessions can be found with --ls and rejoined with --attach.
+# cid.client_pid/cid.tty record this terminal: the exec below keeps this PID for
+# docker compose, so the session counts as attached while that PID lives (closing
+# the tab kills it and leaves the container running, detached).
+# CID_NAME/CID_DIR let the in-container status hook name its status file.
 CONTAINER_NAME="$(project_container_name "$PROJECT_NAME")"
-RUN_ARGS=(--name "$CONTAINER_NAME" --label "cid.project=$PROJECT_NAME" --label "cid.dir=$PROJECT_DIR")
+CLIENT_TTY="$(tty 2>/dev/null || true)"
+[[ "$CLIENT_TTY" == /dev/* ]] || CLIENT_TTY=""
+RUN_ARGS=(--name "$CONTAINER_NAME" --label "cid.project=$PROJECT_NAME" --label "cid.dir=$PROJECT_DIR"
+    --label "cid.client_pid=$$" --label "cid.tty=$CLIENT_TTY"
+    -e "CID_NAME=$CONTAINER_NAME" -e "CID_DIR=$PROJECT_DIR")
 for port_spec in ${PUBLISH_PORTS[@]+"${PUBLISH_PORTS[@]}"}; do
     RUN_ARGS+=(--publish "$(publish_value "$port_spec")")
 done

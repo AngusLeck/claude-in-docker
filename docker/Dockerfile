@@ -104,10 +104,15 @@ ARG CLAUDE_CODE_VERSION=latest
 RUN curl -fsSL https://claude.ai/install.sh | bash -s -- "$CLAUDE_CODE_VERSION"
 ENV PATH="/root/.local/bin:${PATH}"
 
-# Container-only memory for Claude, at Claude Code's Linux managed-policy path
-# (loaded in every session alongside the host-shared ~/.claude/CLAUDE.md).
-# Copied after the Claude Code layer so editing it doesn't rebuild that layer.
-COPY etc/claude-code/CLAUDE.md /etc/claude-code/CLAUDE.md
+# Container-only Claude config at Claude Code's Linux managed-policy path, so it
+# applies in every container session without touching the host-shared ~/.claude:
+# - CLAUDE.md: memory loaded alongside ~/.claude/CLAUDE.md
+# - managed-settings.json + session-status.sh: hooks that report session state
+#   for claude-docker --ls/--pick/--prune (managed hooks merge with user and
+#   plugin hooks rather than replacing them)
+# Copied after the Claude Code layer so editing them doesn't rebuild that layer.
+COPY etc/claude-code/ /etc/claude-code/
+RUN chmod +x /etc/claude-code/session-status.sh
 
 # Setup workspace directory (Claude config mounted from host)
 RUN mkdir -p /workspace/repos

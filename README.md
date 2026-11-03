@@ -56,7 +56,7 @@ claude-docker
 
 - Mounts the current directory into the container
 - Creates a dedicated container per run, named `claude-<dir>-<HHMM>` and labelled `cid.project=<dir>` and `cid.dir=<host path>`
-- The container is removed when the session exits (`--rm`); use `--ls` and `--attach` to find and rejoin running ones
+- The container is removed when the session exits (`--rm`); use `--ls`, `--pick` and `--attach` to find and rejoin running ones, and `--prune` to clean up ones left behind
 - Claude starts with context of your project directory
 - Launching from your repos root (the ailo-style-guide `repos.directory`, default `~/ailo`) prints a warning, since every repo under it gets mounted
 
@@ -64,13 +64,24 @@ claude-docker
 
 ```bash
 claude-docker --ls
-# NAME                    PROJECT       DIR                              AGE
-# claude-my-app-0915      my-app        /Users/me/projects/my-app        2 hours ago
-# claude-docker-global    (global)      /Users/me/.claude-in-docker/...  3 days ago
+# NAME                    PROJECT     STATE     ACTIVITY     AGE
+# claude-api-1102         api         detached  waiting 12m  40 minutes ago
+# claude-my-app-0915      my-app      attached  working 1m   2 hours ago
+# claude-docker-global    (global)    global    -            3 days ago
 
 claude-docker --attach my-app               # by project, if only one session matches
 claude-docker --attach claude-my-app-0915   # by container name
+claude-docker --pick                        # choose one with fzf and go to it
+claude-docker --prune                       # stop sessions whose terminal is gone
 ```
+
+**STATE** says whether anyone is looking at the session. Each project container records the terminal that launched it (labels `cid.client_pid` and `cid.tty`): it is **attached** while that `claude-docker` process, or a `--attach` client, is still alive, and **detached** once it is gone, which is what closing an iTerm tab without quitting Claude leaves behind: a container still running with nobody on it. Containers started before this tracking existed show as **legacy** unless a live `claude-docker` process for the same directory accounts for them, in which case they show as attached.
+
+**ACTIVITY** is what Claude is doing, and for how long: `waiting` (finished, or asking a question, and waiting for you), `working`, or `idle` (started, no prompt yet). Sessions waiting for you are listed first. It comes from hooks that run only inside containers: the image ships `/etc/claude-code/managed-settings.json` (Claude Code's managed settings path on Linux), whose hooks merge with your own and your plugins' hooks rather than replacing them, and leave the shared `~/.claude/settings.json` and host sessions alone. Each hook writes `~/.claude/session-status/<container>.json`.
+
+`--pick` lists the same sessions plus those that ended in the last 7 days (fzf if installed, a numbered menu otherwise). Enter on an attached session brings its iTerm tab to the front; on a detached one it attaches it in this terminal; on an ended one it changes to the project directory and runs `claude-docker -d --resume <session id>`.
+
+`--prune` lists detached sessions, with how long each has been idle, and asks `Stop N detached sessions? [y/N]`; `--prune --yes` skips the question. Legacy sessions are included, since nothing proves anyone is on them; the list marks them so you can say no. Stopping removes the containers (they run with `--rm`).
 
 `--attach` runs `docker attach` on the session's TTY, so you see and type into the same Claude as the original terminal (both stay connected). Detach with **Ctrl-Q Ctrl-Q**; the session keeps running. Docker's default detach sequence, Ctrl-P Ctrl-Q, is not used because Claude Code binds Ctrl-P to history and docker would hold every Ctrl-P back waiting for a possible Ctrl-Q. Exiting Claude ends the session (and removes the container) for every attached terminal. If the screen is blank after attaching, press a key to make Claude redraw.
 
@@ -192,6 +203,8 @@ claude-docker --resume
 # List running sessions, rejoin one (detach with Ctrl-Q Ctrl-Q)
 claude-docker --ls
 claude-docker --attach my-app
+claude-docker --pick
+claude-docker --prune
 
 # Get global workspace path (for IDE access)
 claude-docker -w                    # Prints path

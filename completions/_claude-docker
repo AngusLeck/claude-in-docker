@@ -11,6 +11,9 @@ _claude-docker() {
         '*'{-p,--publish}'[Publish a container port on 127.0.0.1 (project mode)]:port spec:' \
         '--ls[List running claude-docker containers]' \
         '--attach[Reattach to a running project session]:name or project:' \
+        '--pick[Pick a session to focus, attach or resume]' \
+        '--prune[Stop detached sessions]' \
+        '(-y --yes)'{-y,--yes}'[With --prune: skip the confirmation]' \
         '(-w --workspace)'{-w,--workspace}'[Print global workspace path]' \
         '--update[Update claude-docker and Claude Code in the image]' \
         '--no-cache[With --update: force a full image rebuild]' \
