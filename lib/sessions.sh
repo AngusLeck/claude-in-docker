@@ -240,7 +240,7 @@ on run argv
     set targetTty to item 1 of argv
     if application id "com.googlecode.iterm2" is not running then return "missing"
     -- Find the window first, then act on it by id: selecting a window renumbers
-    -- iTerm's windows, so index-based references to tabs go stale mid-loop.
+    -- the iTerm windows, so index-based references to tabs go stale mid-loop.
     tell application id "com.googlecode.iterm2"
         set wid to missing value
         repeat with w in windows
