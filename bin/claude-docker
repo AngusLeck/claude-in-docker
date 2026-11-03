@@ -22,6 +22,15 @@ case "$1" in
         shift
         exec "$SCRIPT_DIR/claude-docker-update" "$@"
         ;;
+    --ls)
+        source "$ROOT_DIR/lib/sessions.sh"
+        list_sessions
+        exit 0
+        ;;
+    --attach)
+        source "$ROOT_DIR/lib/sessions.sh"
+        attach_session "${2:-}"
+        ;;
     --workspace|-w)
         echo "$ROOT_DIR/workspace"
         exit 0
@@ -50,6 +59,14 @@ case "$1" in
         echo "                 Publish a container port on 127.0.0.1 (project mode"
         echo "                 only, repeatable). Small ranges work too: -p 3000-3010."
         echo
+        echo "Sessions:"
+        echo "  --ls           List running claude-docker containers"
+        echo "  --attach <name|project>"
+        echo "                 Reattach this terminal to a running project session."
+        echo "                 Detach with Ctrl-Q Ctrl-Q; the session keeps running."
+        echo "                 (Flags, not subcommands: \`claude attach\` and other"
+        echo "                 claude subcommands still pass through.)"
+        echo
         echo "Management:"
         echo "  --update [--no-cache] [branch]"
         echo "                 Update claude-docker and the Claude Code version in the"
@@ -68,6 +85,8 @@ case "$1" in
         echo "  claude-docker --docker     Run claude with Docker socket access"
         echo "  claude-docker -p 3000      View the container's :3000 at localhost:3000"
         echo "  claude-docker -p 3001:3000 Same, on host port 3001 (parallel sessions)"
+        echo "  claude-docker --ls         See which sessions are running"
+        echo "  claude-docker --attach my-app  Rejoin the session for ./my-app"
         echo "  cd \$(claude-docker -w)     Navigate to global workspace"
         echo "  cursor \$(claude-docker -w) Open workspace in IDE"
         exit 0

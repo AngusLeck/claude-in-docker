@@ -15,6 +15,7 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 source "$ROOT_DIR/lib/flags.sh"
 source "$ROOT_DIR/lib/credentials.sh"
 source "$ROOT_DIR/lib/oauth-relay.sh"
+source "$ROOT_DIR/lib/sessions.sh"
 
 PROJECT_DIR="$(pwd)"
 PROJECT_NAME="$(basename "$PROJECT_DIR")"
@@ -53,6 +54,22 @@ check_safe_directory() {
 
 check_safe_directory "$PROJECT_DIR"
 
+# The repos root passes the depth check but mounts every repo under it, so say so.
+# Reads the repos directory from the ailo-style-guide plugin config if present.
+warn_if_repos_root() {
+    local repos_dir="$HOME/ailo"
+    local plugin_config="$HOME/.claude-ailo-style-guide-config.json"
+    if [[ -f "$plugin_config" ]] && command -v jq &>/dev/null; then
+        repos_dir=$(jq -r '.repos.directory // empty' "$plugin_config" 2>/dev/null || true)
+        repos_dir="${repos_dir:-$HOME/ailo}"
+    fi
+    if [[ -d "$repos_dir" && "$(cd "$repos_dir" && pwd -P)" == "$(pwd -P)" ]]; then
+        echo "Warning: launching from the repos root $repos_dir mounts every repo in it; cd into one repo to keep this Claude focused." >&2
+    fi
+}
+
+warn_if_repos_root
+
 # Determine which env file to use
 if [[ -f "$HOME/.claude-in-docker/.env" ]]; then
     ENV_FILE="$HOME/.claude-in-docker/.env"
@@ -86,7 +103,9 @@ if $DOCKER_SOCK_MODE; then
     COMPOSE_FILES+=(-f compose.docker-sock.yml)
 fi
 
-RUN_ARGS=()
+# Named and labelled so sessions can be found with --ls and rejoined with --attach
+CONTAINER_NAME="$(project_container_name "$PROJECT_NAME")"
+RUN_ARGS=(--name "$CONTAINER_NAME" --label "cid.project=$PROJECT_NAME" --label "cid.dir=$PROJECT_DIR")
 for port_spec in ${PUBLISH_PORTS[@]+"${PUBLISH_PORTS[@]}"}; do
     RUN_ARGS+=(--publish "$(publish_value "$port_spec")")
 done
@@ -97,4 +116,4 @@ start_oauth_relay
 cd "$ROOT_DIR/docker"
 exec docker compose "${COMPOSE_FILES[@]}" \
     --env-file "$ENV_FILE" \
-    run --rm ${RUN_ARGS[@]+"${RUN_ARGS[@]}"} claude $CMD "$@"
+    run --rm "${RUN_ARGS[@]}" claude $CMD "$@"

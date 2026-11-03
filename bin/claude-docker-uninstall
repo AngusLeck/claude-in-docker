@@ -48,10 +48,10 @@ if [[ -f "$ZSH_COMPLETION_FILE" ]]; then
     echo "  Removed $ZSH_COMPLETION_FILE"
 fi
 
-# Remove project containers (claude-docker-<hash>, but not claude-docker-global)
+# Remove project containers (labelled cid.project; see bin/claude-docker-project)
 echo
 echo "Checking for project containers..."
-project_containers=$(docker ps -a --filter "name=claude-docker-" --format '{{.Names}}' 2>/dev/null | grep -v "^claude-docker-global$" || true)
+project_containers=$(docker ps -a --filter "label=cid.project" --format '{{.Names}}' 2>/dev/null || true)
 if [[ -n "$project_containers" ]]; then
     echo "Found project containers:"
     echo "$project_containers" | sed 's/^/  /'

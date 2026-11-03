@@ -55,9 +55,28 @@ claude-docker
 ```
 
 - Mounts the current directory into the container
-- Creates a dedicated container for each project directory
-- Container persists for reconnection (reuses existing container if you run again)
+- Creates a dedicated container per run, named `claude-<dir>-<HHMM>` and labelled `cid.project=<dir>` and `cid.dir=<host path>`
+- The container is removed when the session exits (`--rm`); use `--ls` and `--attach` to find and rejoin running ones
 - Claude starts with context of your project directory
+- Launching from your repos root (the ailo-style-guide `repos.directory`, default `~/ailo`) prints a warning, since every repo under it gets mounted
+
+### Finding and Rejoining Sessions
+
+```bash
+claude-docker --ls
+# NAME                    PROJECT       DIR                              AGE
+# claude-my-app-0915      my-app        /Users/me/projects/my-app        2 hours ago
+# claude-docker-global    (global)      /Users/me/.claude-in-docker/...  3 days ago
+
+claude-docker --attach my-app               # by project, if only one session matches
+claude-docker --attach claude-my-app-0915   # by container name
+```
+
+`--attach` runs `docker attach` on the session's TTY, so you see and type into the same Claude as the original terminal (both stay connected). Detach with **Ctrl-Q Ctrl-Q**; the session keeps running. Docker's default detach sequence, Ctrl-P Ctrl-Q, is not used because Claude Code binds Ctrl-P to history and docker would hold every Ctrl-P back waiting for a possible Ctrl-Q. Exiting Claude ends the session (and removes the container) for every attached terminal. If the screen is blank after attaching, press a key to make Claude redraw.
+
+These are flags rather than subcommands because `claude` has subcommands of its own (`claude attach` among them) and everything else after `claude-docker` is passed through to it.
+
+The global container is listed but not attachable (it only runs a keep-alive); use `claude-docker -g`, which `docker exec`s a new Claude into it.
 
 ### Global Mode
 
@@ -170,6 +189,10 @@ claude-docker -p 3000-3010   # small ranges work too
 # Pass additional args to claude
 claude-docker --resume
 
+# List running sessions, rejoin one (detach with Ctrl-Q Ctrl-Q)
+claude-docker --ls
+claude-docker --attach my-app
+
 # Get global workspace path (for IDE access)
 claude-docker -w                    # Prints path
 cd $(claude-docker -w)              # Navigate to workspace
@@ -214,7 +237,7 @@ This fetches the latest claude-in-docker, looks up the current Claude Code relea
 
 Project-mode containers are created per run, so they use the new image the next time you start one. The global container is long-lived, so the update offers to recreate it (this ends any session attached to it). If you decline, do it later with `docker rm -f claude-docker-global && claude-docker -g`.
 
-Claude Code's own auto-updater is not relied on inside containers: the install lives in the image layer, so anything it downloaded would vanish when a project container exits.
+Claude Code's own auto-updater is switched off inside containers (`DISABLE_AUTOUPDATER=1` in `compose.base.yml`): the install lives in the image layer, so anything it downloaded would vanish when a project container exits. This only affects the containers; the host's Claude Code keeps its own setting.
 
 ## Stability on macOS (Docker Desktop)
 
@@ -245,6 +268,10 @@ Access beyond the container boundary is opt-in, per session:
 - **Docker socket** (`--docker`): the socket is no longer mounted by default — it is root-equivalent on the Docker VM (a container holding it can mount any host directory shared with Docker, and reach into other Claude containers). Grant it only when the session needs docker, e.g. when Claude works on this project itself. The `docker` CLI and compose/buildx plugins are always in the image; they just have nothing to talk to without the flag.
 - **MCP OAuth relay**: listens on `127.0.0.1` only, for ports pinned with `--callback-port`, and forwards nothing but `GET /callback` requests into containers.
 - **Port publishing** (`-p`/`--publish`, project mode only): ports bind to `127.0.0.1` only, never the LAN. The long-lived global container publishes nothing. In-container servers must listen on `0.0.0.0` to be visible (e.g. `--host 0.0.0.0` for vite/next dev servers).
+
+## Container Memory File
+
+The image ships `docker/etc/claude-code/CLAUDE.md` at `/etc/claude-code/CLAUDE.md`, Claude Code's managed-policy memory path on Linux. Every containerised session loads it, so it holds facts about the container itself: the mount layout, what host things are missing (Keychain, Homebrew, host paths), which credentials exist, and not to create git worktrees (they record `/workspace/...` paths that break on the host). `~/.claude/CLAUDE.md` is shared with the host, so container facts don't belong there. Edit the file and rebuild (`claude-docker --update`) to change it.
 
 ## Configuration
 
@@ -290,5 +317,5 @@ rm -rf ~/.claude-in-docker
 docker rmi claude-dev-ubuntu:latest
 
 # Remove project containers
-docker rm $(docker ps -a --filter "name=claude-docker-" -q | grep -v claude-docker-global)
+docker rm -f $(docker ps -a --filter "label=cid.project" -q)
 ```
