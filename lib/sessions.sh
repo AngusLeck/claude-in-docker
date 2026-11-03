@@ -239,20 +239,31 @@ focus_iterm_tab() {
 on run argv
     set targetTty to item 1 of argv
     if application id "com.googlecode.iterm2" is not running then return "missing"
+    -- Find the window first, then act on it by id: selecting a window renumbers
+    -- iTerm's windows, so index-based references to tabs go stale mid-loop.
     tell application id "com.googlecode.iterm2"
+        set wid to missing value
         repeat with w in windows
             repeat with t in tabs of w
                 repeat with s in sessions of t
+                    if tty of s is targetTty then set wid to id of w
+                end repeat
+            end repeat
+        end repeat
+        if wid is missing value then return "missing"
+        activate
+        tell window id wid
+            select
+            repeat with t in tabs
+                repeat with s in sessions of t
                     if tty of s is targetTty then
-                        select w
                         tell t to select
                         tell s to select
-                        activate
                         return "found"
                     end if
                 end repeat
             end repeat
-        end repeat
+        end tell
     end tell
     return "missing"
 end run
