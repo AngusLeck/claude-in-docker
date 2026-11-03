@@ -112,7 +112,7 @@ ENV PATH="/root/.local/bin:${PATH}"
 #   plugin hooks rather than replacing them)
 # Copied after the Claude Code layer so editing them doesn't rebuild that layer.
 COPY etc/claude-code/ /etc/claude-code/
-RUN chmod +x /etc/claude-code/session-status.sh
+RUN chmod +x /etc/claude-code/*.sh
 
 # Setup workspace directory (Claude config mounted from host)
 RUN mkdir -p /workspace/repos

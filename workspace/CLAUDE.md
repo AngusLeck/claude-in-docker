@@ -16,16 +16,6 @@ You are currently logged in to `git` and `gh`.
 ## Docker
 The `docker` CLI is installed, but the Docker socket is only mounted if your colleague started this session with `--docker`. If `docker ps` fails with a socket error, that access was deliberately not granted — ask for it rather than working around it.
 
-## Nix
-`nix` is installed and works (flakes enabled). If a repo has a `flake.nix`, run commands through its dev shell rather than relying on globally installed node/yarn versions:
-
-```bash
-nix develop -c yarn install
-nix develop -c yarn validate
-```
-
-Private flake inputs (e.g. `git+ssh://git@github.com/ailohq/...`) work — ssh github URLs are rewritten to https and authenticated with the GitHub token. The nix store is a shared volume, so the first build of a dev shell is slow but subsequent uses (including in other containers) are fast.
-
 ## Browser testing
 Headless Chromium is installed at `/usr/local/bin/chromium` (also via `$PUPPETEER_EXECUTABLE_PATH`, so `npm install puppeteer` works without downloading anything). You can start a local server, drive it in the browser, click around, and take screenshots. Launch with `--no-sandbox`, e.g.:
 
